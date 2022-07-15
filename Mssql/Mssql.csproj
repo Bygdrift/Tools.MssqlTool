@@ -1,0 +1,50 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+	<!--Notice to Bygdrift developer: Create nuget package: dotnet pack-->
+	<PropertyGroup>
+		<TargetFramework>net6.0</TargetFramework>
+		<Version>0.9.0</Version>
+		<Authors>kenboc</Authors>
+		<Company>Bygdrift</Company>
+		<Description>Add, update or overwrite random csv-files directly into MS SQL database as a table.</Description>
+		<Copyright>https://github.com/Bygdrift/CsvTools/blob/master/License.txt</Copyright>
+		<PackageProjectUrl>https://github.com/Bygdrift/CsvTools</PackageProjectUrl>
+		<PackageIcon>icon.png</PackageIcon>
+		<RepositoryUrl>https://github.com/Bygdrift/CsvTools.git</RepositoryUrl>
+		<PackageTags>CSV</PackageTags>
+		<RepositoryType>git</RepositoryType>
+		<NeutralLanguage>en</NeutralLanguage>
+		<PackageId>Bygdrift.MssqlTools</PackageId>
+		<Product>Bygdrift.MssqlTools</Product>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+		<PackageReleaseNotes>
+			Extracted the project to it's own from Warehouse, as I earlier have done with Bygdrift.CsvTools.
+		</PackageReleaseNotes>
+		<GenerateDocumentationFile>True</GenerateDocumentationFile>
+	</PropertyGroup>
+	<ItemGroup>
+	  <Compile Remove="Helpers\PrepareTableForCsv.cs" />
+	  <Compile Remove="Mssql.cs" />
+	  <Compile Remove="MssqlGet.cs" />
+	  <Compile Remove="MssqlSet.cs" />
+	  <Compile Remove="MssqlSetCsv.cs" />
+	</ItemGroup>
+	
+	<ItemGroup>
+		<None Include="icon.png" Pack="true" PackagePath="\" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+		<PackageReference Include="RepoDb.SqlServer.BulkOperations" Version="1.1.6" />
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Helpers\" />
+	</ItemGroup>
+	
+</Project>
