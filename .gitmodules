@@ -1,0 +1,6 @@
+[submodule "Submodules/Bygdrift.Tools.Log"]
+	path = Submodules/Bygdrift.Tools.Log
+	url = https://github.com/Bygdrift/Tools.Log
+[submodule "Submodules/Bygdrift.Tools.Csv"]
+	path = Submodules/Bygdrift.Tools.Csv
+	url = https://github.com/Bygdrift/Tools.Csv
