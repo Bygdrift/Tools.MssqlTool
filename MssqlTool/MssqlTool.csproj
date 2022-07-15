@@ -35,5 +35,10 @@
 		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
 		<PackageReference Include="RepoDb.SqlServer.BulkOperations" Version="1.1.6" />
 	</ItemGroup>
+
+	<ItemGroup>
+	  <ProjectReference Include="..\Submodules\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
+	  <ProjectReference Include="..\Submodules\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
+	</ItemGroup>
 	
 </Project>

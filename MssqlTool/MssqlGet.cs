@@ -1,11 +1,11 @@
-﻿using Bygdrift.Tools.Csv;
-using Bygdrift.Tools.Mssql.Models;
+﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bygdrift.Tools.Mssql
+namespace Bygdrift.Tools.MssqlTool
 {
     /// <summary>
     /// Access to edit Microsoft SQL database data
@@ -17,12 +17,12 @@ namespace Bygdrift.Tools.Mssql
         /// </summary>
         /// <param name="tableName">The name of the table</param>
         /// <returns>Data as csv</returns>
-        public Csv.Csv GetAsCsv(string tableName)
+        public Csv GetAsCsv(string tableName)
         {
             try
             {
                 IEnumerable<dynamic> data = Connection.QueryAll($"[{SchemaName}].[{tableName}]");
-                return new Csv.Csv().FromExpandoObjects(data);
+                return new Csv().FromExpandoObjects(data);
             }
             catch (Exception)
             {
@@ -36,11 +36,11 @@ namespace Bygdrift.Tools.Mssql
         /// <param name="tableName">The name of the table</param>
         /// <param name="columns">The name of each column</param>
         /// <returns>Data as csv</returns>
-        public Csv.Csv GetAsCsv(string tableName, params string[] columns)
+        public Csv GetAsCsv(string tableName, params string[] columns)
         {
             var fields = Field.From(columns);
             IEnumerable<dynamic> data = Connection.QueryAll($"[{SchemaName}].[{tableName}]", fields: fields);
-            return new Csv.Csv().FromExpandoObjects(data);
+            return new Csv().FromExpandoObjects(data);
         }
 
         /// <summary></summary>

@@ -1,10 +1,10 @@
-﻿using Bygdrift.Tools.Csv;
+﻿using Bygdrift.Tools.CsvTool;
 using RepoDb;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Bygdrift.Tools.Mssql
+namespace Bygdrift.Tools.MssqlTool
 {
     /// <summary>
     /// Access to edit Microsoft SQL database data
@@ -92,7 +92,7 @@ namespace Bygdrift.Tools.Mssql
         /// </summary>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "<Pending>")]
-        public string[] ValidatePrimaryKey(Csv.Csv csv, string tableName, string primaryKey)
+        public string[] ValidatePrimaryKey(Csv csv, string tableName, string primaryKey)
         {
             if (!csv.Headers.Any())
                 return new string[] { "The csv is empty." };

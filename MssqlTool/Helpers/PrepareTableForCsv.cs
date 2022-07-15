@@ -1,5 +1,5 @@
-﻿using Bygdrift.Tools.Csv;
-using Bygdrift.Tools.Mssql.Models;
+﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
 using System.Collections.Generic;
@@ -7,14 +7,14 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("Tests.MssqlTools")]
-namespace Bygdrift.Tools.Mssql.Helpers
+namespace Bygdrift.Tools.MssqlTool.Helpers
 {
     internal class PrepareTableForCsv
     {
         private readonly Mssql mssql;
         private readonly string tableName;
 
-        internal PrepareTableForCsv(Mssql mssql, Csv.Csv csv, string tableName, string primaryKey, bool truncateTable)
+        internal PrepareTableForCsv(Mssql mssql, Csv csv, string tableName, string primaryKey, bool truncateTable)
         {
             this.mssql = mssql;
             this.tableName = tableName;
@@ -47,7 +47,7 @@ namespace Bygdrift.Tools.Mssql.Helpers
             }
         }
 
-        public List<ColumnType> GetColTypes(Csv.Csv csv, string csvPrimaryKey)
+        public List<ColumnType> GetColTypes(Csv csv, string csvPrimaryKey)
         {
             var colTypes = mssql.GetColumnTypes(tableName).ToList();
 

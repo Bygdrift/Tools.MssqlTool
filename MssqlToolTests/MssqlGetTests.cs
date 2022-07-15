@@ -1,13 +1,13 @@
-﻿using Bygdrift.Tools.Csv;
-using Bygdrift.Tools.Log;
-using Bygdrift.Tools.Mssql;
-using Bygdrift.Tools.Mssql.Models;
+﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.LogTool;
+using Bygdrift.Tools.MssqlTool;
+using Bygdrift.Tools.MssqlTool.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Tests.MssqlTools
+namespace MssqlToolTests
 {
     [TestClass]
     public class MssqlGetTests

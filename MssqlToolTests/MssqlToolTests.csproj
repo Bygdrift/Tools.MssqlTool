@@ -16,7 +16,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Mssql\Mssql.csproj" />
+    <ProjectReference Include="..\MssqlTool\MssqlTool.csproj" />
   </ItemGroup>
 
 </Project>

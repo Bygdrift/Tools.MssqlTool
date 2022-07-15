@@ -1,7 +1,6 @@
-﻿using Bygdrift.Tools.Mssql.Models;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Tests.MssqlTools.Models
+namespace MssqlToolTests.Models
 {
     [TestClass]
     public class ColumnTypeTests

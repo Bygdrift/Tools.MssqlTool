@@ -1,13 +1,13 @@
-﻿using Bygdrift.Tools.Csv;
-using Bygdrift.Tools.Log;
-using Bygdrift.Tools.Mssql;
+﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.LogTool;
+using Bygdrift.Tools.MssqlTool;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RepoDb;
 using System;
 using System.IO;
 using System.Linq;
 
-namespace Tests.MssqlTools
+namespace MssqlToolTests
 {
     [TestClass]
     public class MssqlSetTests

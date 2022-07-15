@@ -1,10 +1,10 @@
-﻿using Bygdrift.Tools.Csv;
-using Bygdrift.Tools.Mssql;
+﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.MssqlTool;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;
 
-namespace MssqlTests
+namespace MssqlToolTests
 {
     [TestClass]
     public class MssqlSetCsvTests : BaseTests

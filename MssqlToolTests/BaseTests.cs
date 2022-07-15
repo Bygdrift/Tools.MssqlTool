@@ -1,9 +1,9 @@
-﻿using Bygdrift.Tools.Log;
-using Bygdrift.Tools.Mssql;
+﻿using Bygdrift.Tools.LogTool;
+using Bygdrift.Tools.MssqlTool;
 using System;
 using System.IO;
 
-namespace MssqlTests
+namespace MssqlToolTests
 {
     public class BaseTests
     {

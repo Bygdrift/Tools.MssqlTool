@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Bygdrift.Tools.Mssql.Models
+namespace Bygdrift.Tools.MssqlTool.Models
 {
     /// <summary></summary>
     public class ColumnType
