@@ -3,15 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.0.32002.185
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mssql", "Mssql\Mssql.csproj", "{23FA72AD-6806-4D52-9A0C-69E5778AC869}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MssqlTool", "MssqlTool\MssqlTool.csproj", "{23FA72AD-6806-4D52-9A0C-69E5778AC869}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MssqlTests", "MssqlTests\MssqlTests.csproj", "{6E5E8D70-9CD3-474A-83A8-700A58D8449E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MssqlToolTests", "MssqlToolTests\MssqlToolTests.csproj", "{6E5E8D70-9CD3-474A-83A8-700A58D8449E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Submodules", "Submodules", "{5438CDBE-BD5F-45C4-B5CA-4A86ED8C0D23}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Csv", "Submodules\Bygdrift.Tools.Csv\Csv\Csv.csproj", "{73423F0C-6817-427F-90D4-08001689F459}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Log", "Submodules\Bygdrift.Tools.Log\Log\Log.csproj", "{2A24B702-752F-426B-A57E-B3ECF77934ED}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,17 +23,9 @@ Global
 		{6E5E8D70-9CD3-474A-83A8-700A58D8449E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6E5E8D70-9CD3-474A-83A8-700A58D8449E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6E5E8D70-9CD3-474A-83A8-700A58D8449E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{73423F0C-6817-427F-90D4-08001689F459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{73423F0C-6817-427F-90D4-08001689F459}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{73423F0C-6817-427F-90D4-08001689F459}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{73423F0C-6817-427F-90D4-08001689F459}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(NestedProjects) = preSolution
-		{73423F0C-6817-427F-90D4-08001689F459} = {5438CDBE-BD5F-45C4-B5CA-4A86ED8C0D23}
-		{2A24B702-752F-426B-A57E-B3ECF77934ED} = {5438CDBE-BD5F-45C4-B5CA-4A86ED8C0D23}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {961F95A7-DAF6-4283-8489-E9F9B691000C}

@@ -1,4 +1,4 @@
-﻿using Bygdrift.Warehouse.MssqlTools.Models;
+﻿using Bygdrift.Tools.Mssql.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Tests.MssqlTools.Models

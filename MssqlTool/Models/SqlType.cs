@@ -1,4 +1,4 @@
-﻿namespace Bygdrift.Warehouse.MssqlTools.Models
+﻿namespace Bygdrift.Tools.Mssql.Models
 {
     /// <summary>
     /// 

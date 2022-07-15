@@ -1,5 +1,5 @@
-﻿using Bygdrift.LogTools;
-using Bygdrift.MssqlTools;
+﻿using Bygdrift.Tools.Log;
+using Bygdrift.Tools.Mssql;
 using System;
 using System.IO;
 

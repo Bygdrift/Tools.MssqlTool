@@ -1,9 +1,9 @@
-﻿using Bygdrift.LogTools;
+﻿using Bygdrift.Tools.Log;
 using Microsoft.Data.SqlClient;
 using RepoDb;
 using System;
 
-namespace Bygdrift.MssqlTools
+namespace Bygdrift.Tools.Mssql
 {
     /// <summary>
     /// Access to edit Microsoft SQL database data
@@ -38,7 +38,7 @@ namespace Bygdrift.MssqlTools
         /// <summary>
         /// Info about excecution
         /// </summary>
-        public Log Log { get; }
+        public Log.Log Log { get; }
 
 
         /// <summary>

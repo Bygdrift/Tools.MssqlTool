@@ -1,5 +1,5 @@
-﻿using Bygdrift.CsvTools;
-using Bygdrift.MssqlTools;
+﻿using Bygdrift.Tools.Csv;
+using Bygdrift.Tools.Mssql;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Linq;

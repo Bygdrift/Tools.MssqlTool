@@ -7,13 +7,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="BaseTests.cs" />
-    <Compile Remove="MssqlGetTests.cs" />
-    <Compile Remove="MssqlSetCsvTests.cs" />
-    <Compile Remove="MssqlSetTests.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.9.4" />
     <PackageReference Include="MSTest.TestAdapter" Version="2.2.3">
       <TreatAsUsed>true</TreatAsUsed>

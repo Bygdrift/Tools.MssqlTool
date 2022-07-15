@@ -22,13 +22,6 @@
 		</PackageReleaseNotes>
 		<GenerateDocumentationFile>True</GenerateDocumentationFile>
 	</PropertyGroup>
-	<ItemGroup>
-	  <Compile Remove="Helpers\PrepareTableForCsv.cs" />
-	  <Compile Remove="Mssql.cs" />
-	  <Compile Remove="MssqlGet.cs" />
-	  <Compile Remove="MssqlSet.cs" />
-	  <Compile Remove="MssqlSetCsv.cs" />
-	</ItemGroup>
 	
 	<ItemGroup>
 		<None Include="icon.png" Pack="true" PackagePath="\" />
@@ -41,10 +34,6 @@
 		<PackageReference Include="Microsoft.Extensions.Configuration.Binder" Version="6.0.0" />
 		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
 		<PackageReference Include="RepoDb.SqlServer.BulkOperations" Version="1.1.6" />
-	</ItemGroup>
-
-	<ItemGroup>
-	  <Folder Include="Helpers\" />
 	</ItemGroup>
 	
 </Project>

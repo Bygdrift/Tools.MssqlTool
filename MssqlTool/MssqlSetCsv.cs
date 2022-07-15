@@ -1,10 +1,10 @@
-﻿using Bygdrift.CsvTools;
-using Bygdrift.MssqlTools.Helpers;
+﻿using Bygdrift.Tools.Csv;
+using Bygdrift.Tools.Mssql.Helpers;
 using RepoDb;
 using System;
 using System.Collections.Generic;
 
-namespace Bygdrift.MssqlTools
+namespace Bygdrift.Tools.Mssql
 {
     /// <summary>
     /// Access to edit Microsoft SQL database data
@@ -21,7 +21,7 @@ namespace Bygdrift.MssqlTools
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
         /// <param name="removeEmptyColumns">If true, all columns that only contains null data, will be removed</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
-        public string[] InserCsv(Csv csv, string tableName, bool truncateTable, bool removeEmptyColumns)
+        public string[] InserCsv(Csv.Csv csv, string tableName, bool truncateTable, bool removeEmptyColumns)
         {
             var errors = new List<string>();
             if (!PrepareData(csv, removeEmptyColumns))
@@ -58,7 +58,7 @@ namespace Bygdrift.MssqlTools
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
         /// <param name="removeEmptyColumns">If true, all columns that only contains null data, will be removed</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase.Log</returns>
-        public string[] MergeCsv(Csv csv, string tableName, string primaryKey, bool truncateTable, bool removeEmptyColumns = false)
+        public string[] MergeCsv(Csv.Csv csv, string tableName, string primaryKey, bool truncateTable, bool removeEmptyColumns = false)
         {
             if (csv == null | csv.RowCount == 0)
                 return null;
@@ -106,7 +106,7 @@ namespace Bygdrift.MssqlTools
         }
 
         /// <returns>False if there is no content</returns>
-        private static bool PrepareData(Csv csv, bool removeEmptyColumns)
+        private static bool PrepareData(Csv.Csv csv, bool removeEmptyColumns)
         {
             //csv.UniqueHeadersIgnoreCase(true);
             if (removeEmptyColumns)

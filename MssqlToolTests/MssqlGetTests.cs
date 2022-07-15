@@ -1,7 +1,7 @@
-﻿using Bygdrift.CsvTools;
-using Bygdrift.LogTools;
-using Bygdrift.MssqlTools;
-using Bygdrift.Warehouse.MssqlTools.Models;
+﻿using Bygdrift.Tools.Csv;
+using Bygdrift.Tools.Log;
+using Bygdrift.Tools.Mssql;
+using Bygdrift.Tools.Mssql.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Collections.Generic;
