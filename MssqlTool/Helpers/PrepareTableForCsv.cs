@@ -14,11 +14,12 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
         private readonly Mssql mssql;
         private readonly string tableName;
 
-        internal PrepareTableForCsv(Mssql mssql, Csv csv, string tableName, string primaryKey, bool truncateTable)
+        internal PrepareTableForCsv(Mssql mssql, Csv csv, string tableName, string primaryKey)
         {
             this.mssql = mssql;
             this.tableName = tableName;
             var sql = "";
+        
             if (string.IsNullOrEmpty(tableName))
                 throw new ArgumentNullException(nameof(tableName), "Table name is null. It has to be set.");
 
@@ -43,11 +44,11 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
                     mssql.Log.LogError(e, "Error in db load: {Message}. Commands: {Commands}", e.Message, sql);
                     throw new Exception($"Error in db load: {e.Message}. Commands: {sql}", e);
                 }
-                FlushRepoDb();
+                mssql.FlushRepoDb();
             }
         }
 
-        public List<ColumnType> GetColTypes(Csv csv, string csvPrimaryKey)
+        private List<ColumnType> GetColTypes(Csv csv, string csvPrimaryKey)
         {
             var colTypes = mssql.GetColumnTypes(tableName).ToList();
 
@@ -119,17 +120,6 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
         private void CreateSchemaIfNotExists()
         {
             mssql.Connection.ExecuteNonQuery($"IF NOT EXISTS (SELECT * FROM sys.schemas WHERE name = '{mssql.SchemaName}') BEGIN EXEC('CREATE SCHEMA {mssql.SchemaName}') END");
-        }
-
-        /// <summary>
-        /// Necesary if there has been any alterings
-        /// </summary>
-        public static void FlushRepoDb()
-        {
-            DbFieldCache.Flush(); // Remove all the cached DbField
-            FieldCache.Flush(); // Remove all the cached DbField
-            IdentityCache.Flush(); // Remove all the cached DbField
-            PrimaryCache.Flush(); // Remove all the cached DbField
         }
     }
 }

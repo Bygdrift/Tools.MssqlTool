@@ -1,35 +1,29 @@
 ﻿using Bygdrift.Tools.CsvTool;
-using Bygdrift.Tools.LogTool;
 using Bygdrift.Tools.MssqlTool;
 using Bygdrift.Tools.MssqlTool.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace MssqlToolTests
 {
     [TestClass]
-    public class MssqlGetTests
+    public class MssqlGetTests : BaseTests
     {
-        readonly Mssql mssql;
-
-        public MssqlGetTests() => mssql = new Mssql("", "Test", new Log());
 
         [TestMethod]
         public void ValidatePrimaryKey()
         {
-            var table = nameof(ValidatePrimaryKey);
             var csv = new Csv("Id, Name").AddRow(1).AddRow(2).AddRow(2).AddRecord(4, 1, null);
 
-            var res = mssql.ValidatePrimaryKey(csv, table, "Id");
+            var res = Mssql.ValidatePrimaryKey(csv, MethodName, "Id");
             Assert.IsTrue(res.Length == 2);
 
-            res = mssql.ValidatePrimaryKey(csv, table, "NotExisting");
+            res = Mssql.ValidatePrimaryKey(csv, MethodName, "NotExisting");
             Assert.IsTrue(res.Length == 1);
 
             csv = new Csv("Id, Name");
-            res = mssql.ValidatePrimaryKey(csv, table, "Id");
+            res = Mssql.ValidatePrimaryKey(csv, MethodName, "Id");
             Assert.IsNull(res);
         }
 
@@ -37,39 +31,47 @@ namespace MssqlToolTests
         public void GetAsCsv()
         {
             var csv = new Csv("Id, Data, Date, age").AddRow(new Random().Next(1, 5000), "Some text", DateTime.Now, 22).AddRow(new Random().Next(1, 5000), "Some new text", DateTime.Now, 23);
-            var table = PurgeCreateTable(nameof(GetAsCsv), csv);
+            var table = PurgeCreateTable(MethodName, csv);
 
-            var csvFromReader = mssql.GetAsCsv(table);
+            var csvFromReader = Mssql.GetAsCsv(table);
             Assert.IsTrue(csvFromReader.Headers.Count == 4);
-            var csvFromReader2 = mssql.GetAsCsv(table, "Id", "Data");
+            var csvFromReader2 = Mssql.GetAsCsv(table, "Id", "Data");
             Assert.IsTrue(csvFromReader2.Headers.Count == 2);
         }
 
         [TestMethod]
         public void GetColumnTypes()
         {
-            var csv = new Csv("Id, Data, Date, age, decimal").AddRow(new Random().Next(1, 5000), "Some text", DateTime.Now, 22, 36.8);
-            var table = PurgeCreateTable(nameof(GetColumnTypes), csv);
+            var csv = new Csv("Id, Data, Date, age, decimal")
+                .AddRow(new Random().Next(1, 5000), "Some text", DateTime.Now, 22, 36.8);
+            var table = PurgeCreateTable(MethodName, csv);
 
-            List<ColumnType> a = mssql.GetColumnTypes(table).ToList();
+            var res = Mssql.GetColumnTypes(table).ToList();
+            Assert.AreEqual(res[0].TypeNameSql, SqlType.@int);
+            Assert.AreEqual(res[1].TypeNameSql, SqlType.varchar);
+            Assert.AreEqual(res[2].TypeNameSql, SqlType.datetime);
+            Assert.AreEqual(res[3].TypeNameSql, SqlType.@int);
+            Assert.AreEqual(res[4].TypeNameSql, SqlType.@decimal);
         }
 
         [TestMethod]
         public void SetReadDeletes()
         {
-            var csv = new Csv("Id, Data, Date, age").AddRow(new Random().Next(1, 5000), "Some text", DateTime.Now, 22).AddRow(new Random().Next(1, 5000), "Some new text", DateTime.Now, 23);
-            var table = PurgeCreateTable(nameof(SetReadDeletes), csv);
+            var csv = new Csv("Id, Data, Date, age")
+                .AddRow(1, "Some text", DateTime.Now, 22)
+                .AddRow(2, "Some new text", DateTime.Now, 23);
+            var table = PurgeCreateTable(MethodName, csv);
 
-            var csvFromReader = mssql.GetAsCsv(table);
-            Assert.IsTrue(csvFromReader.ColLimit.Equals((1, 4)));
-            Assert.IsTrue(csvFromReader.RowLimit.Equals((1, 2)));
-            Assert.IsTrue(csvFromReader.GetColRecords(2).Values.Any(o => o.Equals("Some text")));  //Id changes and gets listed sorted by ID, so I cannot say return cscFromReader [1,0]
+            var resCsv = Mssql.GetAsCsv(table);
+            Assert.AreEqual(resCsv.ColLimit, (1, 4));
+            Assert.AreEqual(resCsv.RowLimit, (1, 2));
+            Assert.AreEqual(resCsv.GetRecord(1, 2), "Some text");
         }
 
         private string PurgeCreateTable(string tableName, Csv csv)
         {
-            Assert.IsNull(mssql.DeleteTable(tableName));
-            Assert.IsNull(mssql.MergeCsv(csv, tableName, "Id", false, false));
+            Assert.IsNull(Mssql.DeleteTable(tableName));
+            Assert.IsNull(Mssql.MergeCsv(csv, tableName, "Id", false, false));
             return tableName;
         }
 

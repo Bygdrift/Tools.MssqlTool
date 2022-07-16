@@ -21,20 +21,20 @@ namespace Bygdrift.Tools.MssqlTool
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
         /// <param name="removeEmptyColumns">If true, all columns that only contains null data, will be removed</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
-        public string[] InserCsv(Csv csv, string tableName, bool truncateTable, bool removeEmptyColumns)
+        public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false, bool removeEmptyColumns = false)
         {
             var errors = new List<string>();
             if (!PrepareData(csv, removeEmptyColumns))
                 return null;
 
-            _ = new PrepareTableForCsv(this, csv, tableName, null, truncateTable);
+            if (truncateTable)
+                DeleteTable(tableName);
+
+            new PrepareTableForCsv(this, csv, tableName, null);
             var data = csv.ToExpandoList();
 
             try
             {
-                if (truncateTable)
-                    TruncateTable(tableName);
-
                 if (csv.ColCount * csv.RowCount < 2000)
                     Connection.InsertAll($"[{SchemaName}].[{tableName}]", data, csv.RowLimit.Max, commandTimeout: 3600);
                 else
@@ -74,15 +74,16 @@ namespace Bygdrift.Tools.MssqlTool
             if (validation != null)
                 return AddErrors(errors, validation);
 
-            _ = new PrepareTableForCsv(this, csv, tableName, primaryKey, truncateTable);
+            if (truncateTable)
+                DeleteTable(tableName);
 
+            new PrepareTableForCsv(this, csv, tableName, primaryKey);
             var data = csv.ToExpandoList();
 
             if (truncateTable)
             {
                 try
                 {
-                    TruncateTable(tableName);
                     Connection.BulkInsert($"[{SchemaName}].[{tableName}]", data, bulkCopyTimeout: 3600);
                 }
                 catch (Exception e)

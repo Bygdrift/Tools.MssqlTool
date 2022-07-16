@@ -80,7 +80,17 @@ namespace Bygdrift.Tools.MssqlTool
             set { _connection = value; }
         }
 
-        
+        /// <summary>
+        /// Necesary if there has been any alterings
+        /// </summary>
+        public void FlushRepoDb()
+        {
+            DbFieldCache.Flush(); // Remove all the cached DbField
+            FieldCache.Flush(); // Remove all the cached DbField
+            IdentityCache.Flush(); // Remove all the cached DbField
+            PrimaryCache.Flush(); // Remove all the cached DbField
+        }
+
 
         /// <summary>
         /// Called when disposing
