@@ -104,6 +104,8 @@ namespace Bygdrift.Tools.MssqlTool
                 }
             }
 
+
+
             return errors.GetErrors;
         }
 
