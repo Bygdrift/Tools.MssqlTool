@@ -1,5 +1,6 @@
 ﻿using Bygdrift.Tools.CsvTool;
 using Bygdrift.Tools.MssqlTool.Helpers;
+using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
 using System.Collections.Generic;
@@ -23,7 +24,7 @@ namespace Bygdrift.Tools.MssqlTool
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
         public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false, bool removeEmptyColumns = false)
         {
-            var errors = new List<string>();
+            var errors = new Errors(Log);
             if (!PrepareData(csv, removeEmptyColumns))
                 return null;
 
@@ -42,9 +43,9 @@ namespace Bygdrift.Tools.MssqlTool
             }
             catch (Exception e)
             {
-                AddErrors(errors, e.Message);
+               errors.AddErrors(e.Message);
             }
-            return errors.Count == 0 ? null : errors.ToArray();
+            return errors.GetErrors;
         }
 
         /// <summary>
@@ -63,16 +64,16 @@ namespace Bygdrift.Tools.MssqlTool
             if (csv == null | csv.RowCount == 0)
                 return null;
 
-            var errors = new List<string>();
+            var errors = new Errors(Log);
             if (!PrepareData(csv, removeEmptyColumns))
                 return null;
 
             if (primaryKey == null)
-                return AddErrors(errors, "PrimaryKey cannot be set to null. Use the InsertCsv() method instead.");
+                return errors.AddErrors("PrimaryKey cannot be set to null. Use the InsertCsv() method instead.");
 
             var validation = ValidatePrimaryKey(csv, tableName, primaryKey);
             if (validation != null)
-                return AddErrors(errors, validation);
+                return errors.AddErrors(validation);
 
             if (truncateTable)
                 DeleteTable(tableName);
@@ -88,7 +89,7 @@ namespace Bygdrift.Tools.MssqlTool
                 }
                 catch (Exception e)
                 {
-                    AddErrors(errors, e.Message);
+                   errors.AddErrors(e.Message);
                 }
             }
             else
@@ -99,11 +100,11 @@ namespace Bygdrift.Tools.MssqlTool
                 }
                 catch (Exception e)
                 {
-                    AddErrors(errors, e.Message);
+                   errors.AddErrors(e.Message);
                 }
             }
 
-            return errors.Count == 0 ? null : errors.ToArray();
+            return errors.GetErrors;
         }
 
         /// <returns>False if there is no content</returns>
@@ -122,23 +123,6 @@ namespace Bygdrift.Tools.MssqlTool
             return true;
         }
 
-        /// <returns>All accumulated errors</returns>
-        private string[] AddErrors(List<string> errors, string newError)
-        {
-            errors.Add(newError);
-            Log.LogError(newError);
-            return errors.ToArray();
-        }
-
-        /// <returns>All accumulated errors</returns>
-        private string[] AddErrors(List<string> errors, string[] newErrors)
-        {
-            foreach (var item in newErrors)
-            {
-                errors.Add(item);
-                Log.LogError(item);
-            }
-            return errors.ToArray();
-        }
+       
     }
 }

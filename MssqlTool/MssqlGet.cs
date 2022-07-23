@@ -46,12 +46,14 @@ namespace Bygdrift.Tools.MssqlTool
         /// <summary></summary>
         public IEnumerable<ColumnType> GetColumnTypes(string tableName)
         {
-           var sql = "SELECT C1.COLUMN_NAME, C1.DATA_TYPE, C1.CHARACTER_MAXIMUM_LENGTH, CASE WHEN KCU.COLUMN_NAME IS NULL THEN CAST(0 as bit) ELSE CAST(1 as bit)  END AS IsPrimaryKey\n" +
+           var sql = "SELECT C1.COLUMN_NAME, C1.DATA_TYPE, C1.CHARACTER_MAXIMUM_LENGTH, CONSTRAINT_NAME, \n" + 
+                "CASE WHEN C1.IS_NULLABLE LIKE 'NO' THEN CAST(0 as bit) ELSE CAST(1 as bit) END AS IS_NULLABLE, \n" +
+                "CASE WHEN KCU.COLUMN_NAME IS NULL THEN CAST(0 as bit) ELSE CAST(1 as bit) END AS IS_PRIMARY_KEY \n" +
             "FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE KCU RIGHT JOIN INFORMATION_SCHEMA.COLUMNS C1 ON C1.TABLE_SCHEMA = KCU.TABLE_SCHEMA AND C1.TABLE_NAME = KCU.TABLE_NAME AND C1.COLUMN_NAME = KCU.COLUMN_NAME\n" +
             $"WHERE C1.TABLE_SCHEMA = '{SchemaName}' AND C1.TABLE_NAME = '{tableName}'";
 
             foreach (dynamic item in Connection.ExecuteQuery(sql))
-                yield return new ColumnType(item.COLUMN_NAME).AddSql(item.DATA_TYPE, item.CHARACTER_MAXIMUM_LENGTH, item.IsPrimaryKey);
+                yield return new ColumnType(item.COLUMN_NAME).AddSql(item.DATA_TYPE, item.CHARACTER_MAXIMUM_LENGTH, item.IS_PRIMARY_KEY, item.CONSTRAINT_NAME, item.IS_NULLABLE);
         }
 
         /// <summary>

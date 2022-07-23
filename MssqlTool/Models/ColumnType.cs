@@ -32,6 +32,16 @@ namespace Bygdrift.Tools.MssqlTool.Models
         public int? MaxLengthSql { get; set; }
 
         /// <summary>
+        /// 
+        /// </summary>
+        public string ConstraintSql { get; set; }
+        
+        /// <summary>
+        /// 
+        /// </summary>
+        public bool IsNullableSql { get; set; }
+
+        /// <summary>
         /// The name of the column
         /// </summary>
         public string Name { get; set; }
@@ -52,13 +62,17 @@ namespace Bygdrift.Tools.MssqlTool.Models
         /// <param name="sqlTypeName"></param>
         /// <param name="sqlMaxLength"></param>
         /// <param name="sqlIsPrimaryKey"></param>
+        /// <param name="sqlConstraint"></param>
+        /// <param name="sqlIsNullable"></param>
         /// <returns></returns>
-        public ColumnType AddSql(string sqlTypeName, int? sqlMaxLength, bool sqlIsPrimaryKey)
+        public ColumnType AddSql(string sqlTypeName, int? sqlMaxLength, bool sqlIsPrimaryKey, string sqlConstraint, bool sqlIsNullable)
         {
             IsSetForSql = true;
             TypeNameSql = GetSqlTypeName(sqlTypeName);  //Must be set before MaxLength
             MaxLengthSql = sqlMaxLength;
             IsPrimaryKeySql = sqlIsPrimaryKey;
+            ConstraintSql = sqlConstraint;
+            IsNullableSql = sqlIsNullable;
             return this;
         }
 

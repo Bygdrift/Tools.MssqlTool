@@ -6,7 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-[assembly: InternalsVisibleTo("Tests.MssqlTools")]
+[assembly: InternalsVisibleTo("MssqlToolTests")]
 namespace Bygdrift.Tools.MssqlTool.Helpers
 {
     internal class PrepareTableForCsv
@@ -19,7 +19,7 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             this.mssql = mssql;
             this.tableName = tableName;
             var sql = "";
-        
+
             if (string.IsNullOrEmpty(tableName))
                 throw new ArgumentNullException(nameof(tableName), "Table name is null. It has to be set.");
 
@@ -89,19 +89,43 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             foreach (var colType in colTypes)
             {
                 if (colType.IsPrimaryKeyCsv && !colType.IsPrimaryKeySql)  //PrimaryKey added
-                    mssql.Log.LogError("The system cannot add a primary key to an already created table.");
+                {
+                    //var constraint = GetConstraint();
+                    //if (constraint == null)
+                    //    throw new Exception("Error in getting constraint");
+
+                    //sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT {constraint};\n";
+
+                    if(colType.IsNullableSql)
+                        mssql.Connection.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN {colType.Name} {colType.TypeNameSql} NOT NULL;");
+
+                    //sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD PRIMARY KEY ([{colType.Name}]);\n";
+                    sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
+                }
 
                 if (!colType.IsPrimaryKeyCsv && colType.IsPrimaryKeySql)  //PrimaryKey removed
                     mssql.Log.LogError("The system cannot remove a primary key to an already created table.");
 
-                if (colType.TryGetUpdatedChangedType(out string typeExpression))
+                if (colType.TryGetUpdatedChangedType(out string typeExpression))  //Update column
                     sql += SqlUpdateCommand(colType.Name, typeExpression, colType.IsPrimaryKeySql, false);
 
-                if (!colType.IsSetForSql)  //Add missing 
+                if (!colType.IsSetForSql)  //Add column
                     sql += SqlUpdateCommand(colType.Name, typeExpression, colType.IsPrimaryKeyCsv, true);
             }
             return sql;
         }
+
+        internal string CreateConstraintName(string columnName)
+        {
+            return "PK__" + columnName + Guid.NewGuid().ToString("N").ToUpper().Substring(0, 16);
+        }
+
+        //internal string GetConstraint()
+        //{
+        //    var sql = "select OBJECT_NAME(OBJECT_ID) AS NameofConstraint\n" +
+        //        $"FROM sys.objects where OBJECT_NAME(parent_object_id)='{tableName}' and type_desc LIKE '%CONSTRAINT'";
+        //    return mssql.Connection.ExecuteQuery(sql).FirstOrDefault()?.NameofConstraint;
+        //}
 
         private string SqlUpdateCommand(string name, string expression, bool isPrimaryKey, bool addColumn)
         {
@@ -109,11 +133,13 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             if (!isPrimaryKey)
                 return $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] {alter} [{name}] {expression};\n";
 
+
+            ///TODO: Denne skal der ryddes op i - der skal ikke væe Drop Constaint.
             var commands = "DECLARE @constraint varchar(128);\n";
             commands += $"SELECT @constraint = CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = '{mssql.SchemaName}' AND TABLE_NAME = '{tableName}';\n";
             commands += $"if (@constraint) IS NOT NULL EXEC('ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT ' + @constraint);\n";
             commands += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] {alter} [{name}] {expression} NOT NULL;\n";
-            commands += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{name}_pk] PRIMARY KEY ([{name}]);\n";
+            commands += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(name)}] PRIMARY KEY ([{name}]);\n";
             return commands;
         }
 

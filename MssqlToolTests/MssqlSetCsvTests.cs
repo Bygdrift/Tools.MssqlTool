@@ -4,6 +4,7 @@ using Bygdrift.Tools.MssqlTool.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RepoDb;
 using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -12,6 +13,17 @@ namespace MssqlToolTests
     [TestClass]
     public class MssqlSetTests :BaseTests
     {
+
+        [TestInitialize]
+        public void TestInit()
+        {
+        }
+
+        [TestCleanup]
+        public void TestCleanup()
+        {
+        }
+
         [TestMethod]
         public void TruncateTable()
         {
@@ -25,7 +37,7 @@ namespace MssqlToolTests
             var csvFromReader = Mssql.GetAsCsv(MethodName);
             Assert.AreEqual(csvFromReader.RowCount, 1);
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         //Denne virker ikke og skal komme til at virke - 1. prio
@@ -40,8 +52,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, "T"), MethodName, false, false));
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, true, false));  //When truncating, the whole table is deleted, so the column Data is change
             Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
-
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
 
@@ -49,16 +60,54 @@ namespace MssqlToolTests
         [TestMethod]
         public void DeleteEmptyColumn()
         {
+            //This makes only one column:
             Assert.IsNull(Mssql.DeleteTable(MethodName));
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, null), MethodName, false, true));
+            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Count(), 1);
 
+            //This makes two columns:
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, "Id", false, true));
+            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Count(), 2);
+                        
+            //This will remove the column that only has null now:
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, null), MethodName, "Id", false, true));
             var csvFromReader = Mssql.GetAsCsv(MethodName);
 
-            Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, null), MethodName, false, true));
-            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
-
-            Assert.IsNull(Cleanup(MethodName));
+            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Count(), 1);
+            Cleanup();
         }
+
+        //Denne virker ikke og skal komme til at virke - 1. prio
+        [TestMethod]
+        public void PrimaryKey_Added()
+        {
+            Assert.IsNull(Mssql.DeleteTable(MethodName));
+            Assert.IsNull(Mssql.InsertCsv(new Csv("Id").AddRow(1), MethodName, false));
+            Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(null, 1), MethodName, false));  //This gives a null value to a column that sholud be tried to convert into a primary key!
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id").AddRow(1), MethodName, "Id", false));
+            Cleanup();
+        }
+
+        //Denne virker ikke og skal komme til at virke - 1. prio
+        [TestMethod]
+        public void ChangePrimaryKey_Changed()
+        {
+            Assert.IsNull(Mssql.DeleteTable(MethodName));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id1, Id2").AddRow(1, 1), MethodName, "Id1", false));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id1, Id2").AddRow(1, 1), MethodName, "Id2", false));
+            Cleanup();
+        }
+
+        //Denne virker ikke og skal komme til at virke - 1. prio
+        [TestMethod]
+        public void PrimaryKey_Removed()
+        {
+            Assert.IsNull(Mssql.DeleteTable(MethodName));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id").AddRow(1), MethodName, "Id", false));
+            Assert.IsNull(Mssql.InsertCsv(new Csv("Id").AddRow(1), MethodName, false));
+            Cleanup();
+        }
+
 
 
         /// <summary>
@@ -80,7 +129,7 @@ namespace MssqlToolTests
             Assert.AreEqual(csvFromReader.GetRecord(1, 5), "Knud");
 
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         /// <summary>
@@ -96,7 +145,7 @@ namespace MssqlToolTests
 
             var csvFromReader = Mssql.GetAsCsv(MethodName);
             Assert.IsFalse(csvFromReader.TryGetColId("EmptyColumn", out int _));
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -115,7 +164,7 @@ namespace MssqlToolTests
             columns = Mssql.GetColumnTypes(MethodName).ToList();
             Assert.AreEqual(columns[1].TypeNameSql, SqlType.varchar);
 
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -131,7 +180,7 @@ namespace MssqlToolTests
             {
             }
             Assert.AreEqual(Mssql.Log.GetErrorsAndCriticals().Count(), 2);
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -143,7 +192,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.DeleteTable(MethodName));
             Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Index", false, false));
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -157,7 +206,7 @@ namespace MssqlToolTests
                 Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id", false, false));
             }
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         /// <summary>
@@ -176,7 +225,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.DeleteTable(MethodName));
             Assert.IsNull(Mssql.InsertCsv(csv, MethodName, false, false));
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -189,7 +238,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id", false, false));
             Assert.IsNull(Mssql.MergeCsv(csvTwo, MethodName, "Id", false, false));
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -203,7 +252,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.TruncateTable(MethodName));
             Assert.IsNull(Mssql.MergeCsv(csvTwo, MethodName, "Id", false, false));
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -214,7 +263,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id", false, false));
 
             Assert.IsNull(Mssql.InsertCsv(csv, MethodName, false, false));
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
         }
 
@@ -238,7 +287,7 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.InsertCsv(csvTwo, MethodName, false, false));
             var csvFromReader2 = Mssql.GetAsCsv(MethodName);
             Assert.IsTrue(csvFromReader2.GetRecord(2, 2).Equals("Some more text"));
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
         [TestMethod]
@@ -258,15 +307,10 @@ namespace MssqlToolTests
             var csvFromReader2 = Mssql.GetAsCsv(MethodName);
             Assert.IsTrue(csvFromReader2.GetRecord(1, 2).Equals("Some more text"));
             Assert.IsTrue(csvFromReader2.GetRecord(1, 5).Equals("Knud"));
-            Assert.IsNull(Cleanup(MethodName));
+            Cleanup();
         }
 
-        private string Cleanup(string tableName)
-        {
-            var res = Mssql.DeleteTable(tableName);
-            Mssql.Dispose();
-            return res;
-        }
+        
 
         //Is not working as expected.... It cannot add 1 and then change to decimal 1.2 in same method 
         //[TestMethod]

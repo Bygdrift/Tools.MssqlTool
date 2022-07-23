@@ -10,7 +10,7 @@
 		<PackageProjectUrl>https://github.com/Bygdrift/CsvTools</PackageProjectUrl>
 		<PackageIcon>icon.png</PackageIcon>
 		<RepositoryUrl>https://github.com/Bygdrift/CsvTools.git</RepositoryUrl>
-		<PackageTags>CSV</PackageTags>
+		<PackageTags>SQL</PackageTags>
 		<RepositoryType>git</RepositoryType>
 		<NeutralLanguage>en</NeutralLanguage>
 		<PackageId>Bygdrift.MssqlTools</PackageId>
