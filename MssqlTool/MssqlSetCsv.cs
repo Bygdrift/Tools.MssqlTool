@@ -1,9 +1,10 @@
 ﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.LogTool;
+using Bygdrift.Tools.LogTool.Models;
 using Bygdrift.Tools.MssqlTool.Helpers;
-using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 
 namespace Bygdrift.Tools.MssqlTool
 {
@@ -24,9 +25,10 @@ namespace Bygdrift.Tools.MssqlTool
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
         public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false, bool removeEmptyColumns = false)
         {
-            var errors = new Errors(Log);
             if (!PrepareData(csv, removeEmptyColumns))
                 return null;
+
+            var subLog = new Log(Log.Logger);  //Generated as a sub log so result from current method can be returned
 
             if (truncateTable)
                 DeleteTable(tableName);
@@ -43,9 +45,10 @@ namespace Bygdrift.Tools.MssqlTool
             }
             catch (Exception e)
             {
-               errors.AddErrors(e.Message);
+               subLog.Add(LogType.Error, e.Message);
             }
-            return errors.GetErrors;
+
+            return subLog.Any() ? subLog.GetLogs().ToArray() : null;
         }
 
         /// <summary>
@@ -64,16 +67,19 @@ namespace Bygdrift.Tools.MssqlTool
             if (csv == null | csv.RowCount == 0)
                 return null;
 
-            var errors = new Errors(Log);
+            var subLog = new Log(Log.Logger);  //Generated as a sub log so result from current method can be returned
             if (!PrepareData(csv, removeEmptyColumns))
                 return null;
 
             if (primaryKey == null)
-                return errors.AddErrors("PrimaryKey cannot be set to null. Use the InsertCsv() method instead.");
+            {
+                subLog.LogError("PrimaryKey cannot be set to null. Use the InsertCsv() method instead.");
+                return subLog.GetLogs().ToArray();
+            }
 
             var validation = ValidatePrimaryKey(csv, tableName, primaryKey);
-            if (validation != null)
-                return errors.AddErrors(validation);
+            if (validation.Logs.Any())
+                return subLog.Add(validation).GetLogs().ToArray();
 
             if (truncateTable)
                 DeleteTable(tableName);
@@ -89,7 +95,7 @@ namespace Bygdrift.Tools.MssqlTool
                 }
                 catch (Exception e)
                 {
-                   errors.AddErrors(e.Message);
+                   subLog.Add(LogType.Error, e.Message);
                 }
             }
             else
@@ -100,13 +106,11 @@ namespace Bygdrift.Tools.MssqlTool
                 }
                 catch (Exception e)
                 {
-                   errors.AddErrors(e.Message);
+                   subLog.Add(LogType.Error, e.Message);
                 }
             }
 
-
-
-            return errors.GetErrors;
+            return subLog.Any() ? subLog.GetLogs().ToArray() : null;
         }
 
         /// <returns>False if there is no content</returns>

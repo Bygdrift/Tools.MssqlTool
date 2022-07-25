@@ -41,7 +41,7 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
                 }
                 catch (Exception e)
                 {
-                    mssql.Log.LogError(e, "Error in db load: {Message}. Commands: {Commands}", e.Message, sql);
+                    mssql.Log.Add(LogTool.Models.LogType.Critical, e, "Error in db load: {Message}. Commands: {Commands}", e.Message, sql);
                     throw new Exception($"Error in db load: {e.Message}. Commands: {sql}", e);
                 }
                 mssql.FlushRepoDb();
@@ -90,57 +90,37 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             {
                 if (colType.IsPrimaryKeyCsv && !colType.IsPrimaryKeySql)  //PrimaryKey added
                 {
-                    //var constraint = GetConstraint();
-                    //if (constraint == null)
-                    //    throw new Exception("Error in getting constraint");
+                    if (colType.IsNullableSql && colType.TryGetUpdatedChangedType(out string typeExpression))  //A normal column has been added and must be upgraded to a primary key:
+                        mssql.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {typeExpression} NOT NULL;");
 
-                    //sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT {constraint};\n";
-
-                    if(colType.IsNullableSql)
-                        mssql.Connection.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN {colType.Name} {colType.TypeNameSql} NOT NULL;");
-
-                    //sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD PRIMARY KEY ([{colType.Name}]);\n";
                     sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
                 }
-
-                if (!colType.IsPrimaryKeyCsv && colType.IsPrimaryKeySql)  //PrimaryKey removed
-                    mssql.Log.LogError("The system cannot remove a primary key to an already created table.");
-
-                if (colType.TryGetUpdatedChangedType(out string typeExpression))  //Update column
-                    sql += SqlUpdateCommand(colType.Name, typeExpression, colType.IsPrimaryKeySql, false);
-
-                if (!colType.IsSetForSql)  //Add column
-                    sql += SqlUpdateCommand(colType.Name, typeExpression, colType.IsPrimaryKeyCsv, true);
+                else if (!colType.IsPrimaryKeyCsv && colType.IsPrimaryKeySql)  //PrimaryKey removed. Has to be run before ADD and thats why it is not added to sql+=...
+                {
+                    mssql.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT {colType.ConstraintSql};");
+                }
+                else if (colType.TryGetUpdatedChangedType(out string typeExpression))  //Update column
+                {
+                    if (colType.IsPrimaryKeyCsv && colType.IsPrimaryKeySql)  //PrimaryKey updated
+                    {
+                        sql += "DECLARE @constraint varchar(128);\n";
+                        sql += $"SELECT @constraint = CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = '{mssql.SchemaName}' AND TABLE_NAME = '{tableName}';\n";
+                        sql += $"if (@constraint) IS NOT NULL EXEC('ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT ' + @constraint);\n";
+                        sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] { typeExpression} NOT NULL;\n";
+                        sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
+                    }
+                    else  //Normal colum updated
+                        sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {typeExpression};\n";
+                }
+                else if (!colType.IsSetForSql)  //Normal column added
+                    sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD [{colType.Name}] {typeExpression};\n";
             }
             return sql;
         }
 
         internal string CreateConstraintName(string columnName)
         {
-            return "PK__" + columnName + Guid.NewGuid().ToString("N").ToUpper().Substring(0, 16);
-        }
-
-        //internal string GetConstraint()
-        //{
-        //    var sql = "select OBJECT_NAME(OBJECT_ID) AS NameofConstraint\n" +
-        //        $"FROM sys.objects where OBJECT_NAME(parent_object_id)='{tableName}' and type_desc LIKE '%CONSTRAINT'";
-        //    return mssql.Connection.ExecuteQuery(sql).FirstOrDefault()?.NameofConstraint;
-        //}
-
-        private string SqlUpdateCommand(string name, string expression, bool isPrimaryKey, bool addColumn)
-        {
-            string alter = addColumn ? "ADD" : "ALTER COLUMN";
-            if (!isPrimaryKey)
-                return $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] {alter} [{name}] {expression};\n";
-
-
-            ///TODO: Denne skal der ryddes op i - der skal ikke væe Drop Constaint.
-            var commands = "DECLARE @constraint varchar(128);\n";
-            commands += $"SELECT @constraint = CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = '{mssql.SchemaName}' AND TABLE_NAME = '{tableName}';\n";
-            commands += $"if (@constraint) IS NOT NULL EXEC('ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT ' + @constraint);\n";
-            commands += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] {alter} [{name}] {expression} NOT NULL;\n";
-            commands += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(name)}] PRIMARY KEY ([{name}]);\n";
-            return commands;
+            return string.Concat("PK__", columnName, Guid.NewGuid().ToString("N").ToUpper().AsSpan(0, 16));
         }
 
         private void CreateSchemaIfNotExists()

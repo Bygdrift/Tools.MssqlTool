@@ -16,15 +16,15 @@ namespace MssqlToolTests
         {
             var csv = new Csv("Id, Name").AddRow(1).AddRow(2).AddRow(2).AddRecord(4, 1, null);
 
-            var res = Mssql.ValidatePrimaryKey(csv, MethodName, "Id");
-            Assert.IsTrue(res.Length == 2);
+            var log1 = Mssql.ValidatePrimaryKey(csv, MethodName, "Id");
+            Assert.IsTrue(log1.GetLogs().Count() == 2);
 
-            res = Mssql.ValidatePrimaryKey(csv, MethodName, "NotExisting");
-            Assert.IsTrue(res.Length == 1);
+            var log2 = Mssql.ValidatePrimaryKey(csv, MethodName, "NotExisting");
+            Assert.IsTrue(log2.GetLogs().Count() == 1);
 
-            csv = new Csv("Id, Name");
-            res = Mssql.ValidatePrimaryKey(csv, MethodName, "Id");
-            Assert.IsNull(res);
+            var csv2 = new Csv("Id, Name");
+            var log3 = Mssql.ValidatePrimaryKey(csv2, MethodName, "Id");
+            Assert.IsFalse(log3.HasErrorsOrCriticals());
         }
 
         [TestMethod]

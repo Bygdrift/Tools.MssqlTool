@@ -4,7 +4,6 @@ using Bygdrift.Tools.MssqlTool.Models;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RepoDb;
 using System;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -45,16 +44,17 @@ namespace MssqlToolTests
         public void ChangeColumnType()
         {
             Assert.IsNull(Mssql.DeleteTable(MethodName));
-            Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, "T"), MethodName, false, false));
+            var res = Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, "T"), MethodName, false, false);
+            Assert.IsNull(res);
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, false, false));
-            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
+            var type = Mssql.GetColumnTypes(MethodName).Last().TypeNameSql;
+            Assert.AreEqual(type, SqlType.@int);
 
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, "T"), MethodName, false, false));
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, true, false));  //When truncating, the whole table is deleted, so the column Data is change
             Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
             Cleanup();
         }
-
 
         //Denne virker ikke og skal komme til at virke - 1. prio
         [TestMethod]
@@ -73,7 +73,8 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, null), MethodName, "Id", false, true));
             var csvFromReader = Mssql.GetAsCsv(MethodName);
 
-            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Count(), 1);
+            var columnTypes = Mssql.GetColumnTypes(MethodName);
+            Assert.AreEqual(columnTypes.Count(), 2);
             Cleanup();
         }
 
@@ -90,11 +91,30 @@ namespace MssqlToolTests
 
         //Denne virker ikke og skal komme til at virke - 1. prio
         [TestMethod]
-        public void ChangePrimaryKey_Changed()
+        public void PrimaryKey_Changed()
         {
             Assert.IsNull(Mssql.DeleteTable(MethodName));
             Assert.IsNull(Mssql.MergeCsv(new Csv("Id1, Id2").AddRow(1, 1), MethodName, "Id1", false));
             Assert.IsNull(Mssql.MergeCsv(new Csv("Id1, Id2").AddRow(1, 1), MethodName, "Id2", false));
+            Cleanup();
+        }
+
+        //Denne virker ikke og skal komme til at virke - 1. prio
+        [TestMethod]
+        public void PrimaryKey_Update()
+        {
+            Assert.IsNull(Mssql.DeleteTable(MethodName));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, "Id", false));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data, Age").AddRow("ww", "text", 21), MethodName, "Id", false));
+            Cleanup();
+        }
+
+        [TestMethod]
+        public void NormalColumnUpdatedToPrimaryKey()
+        {
+            Assert.IsNull(Mssql.DeleteTable(MethodName));
+            Assert.IsNull(Mssql.InsertCsv(new Csv("Id").AddRow("w"), MethodName, false));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id").AddRow("ww"), MethodName, "Id", false));
             Cleanup();
         }
 
@@ -107,8 +127,6 @@ namespace MssqlToolTests
             Assert.IsNull(Mssql.InsertCsv(new Csv("Id").AddRow(1), MethodName, false));
             Cleanup();
         }
-
-
 
         /// <summary>
         /// this would fail without flush fail and I asked for a solution here: https://stackoverflow.com/questions/69635893/repodb-doesnt-merge-correct-after-altering-a-column
