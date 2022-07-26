@@ -38,14 +38,11 @@ namespace Bygdrift.Tools.MssqlTool
 
             try
             {
-                if (csv.ColCount * csv.RowCount < 2000)
-                    Connection.InsertAll($"[{SchemaName}].[{tableName}]", data, csv.RowLimit.Max, commandTimeout: 3600);
-                else
-                    Connection.BulkInsert($"[{SchemaName}].[{tableName}]", data, bulkCopyTimeout: 3600);
+                Connection.BulkInsert($"[{SchemaName}].[{tableName}]", data, bulkCopyTimeout: 3600);
             }
             catch (Exception e)
             {
-               subLog.Add(LogType.Error, e.Message);
+                subLog.Add(LogType.Error, e.Message);
             }
 
             return subLog.Any() ? subLog.GetLogs().ToArray() : null;
@@ -95,7 +92,7 @@ namespace Bygdrift.Tools.MssqlTool
                 }
                 catch (Exception e)
                 {
-                   subLog.Add(LogType.Error, e.Message);
+                    subLog.Add(LogType.Error, e.Message);
                 }
             }
             else
@@ -106,7 +103,7 @@ namespace Bygdrift.Tools.MssqlTool
                 }
                 catch (Exception e)
                 {
-                   subLog.Add(LogType.Error, e.Message);
+                    subLog.Add(LogType.Error, e.Message);
                 }
             }
 
@@ -129,6 +126,6 @@ namespace Bygdrift.Tools.MssqlTool
             return true;
         }
 
-       
+
     }
 }

@@ -90,8 +90,11 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             {
                 if (colType.IsPrimaryKeyCsv && !colType.IsPrimaryKeySql)  //PrimaryKey added
                 {
-                    if (colType.IsNullableSql && colType.TryGetUpdatedChangedType(out string typeExpression))  //A normal column has been added and must be upgraded to a primary key:
+                    if (colType.IsNullableSql)  //A normal column has been added and must be upgraded to a primary key:
+                    {
+                        colType.TryGetUpdatedChangedType(out string typeExpression);
                         mssql.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {typeExpression} NOT NULL;");
+                    }
 
                     sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
                 }

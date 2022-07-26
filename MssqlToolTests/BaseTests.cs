@@ -9,17 +9,6 @@ namespace MssqlToolTests
 {
     public class BaseTests
     {
-
-        public string MethodName
-        {
-            get
-            {
-                var methodInfo = new StackTrace().GetFrame(1).GetMethod();
-                return methodInfo.Name;
-            }
-        }
-
-
         /// <summary>Path to project base</summary>
         public static readonly string BasePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\"));
         public readonly Mssql Mssql;
@@ -29,20 +18,23 @@ namespace MssqlToolTests
             var dbPath = Path.Combine(BasePath, "Files\\DB\\MssqlTools.mdf");
             var conn = $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename={dbPath};Integrated Security=True";
             Mssql = new Mssql(conn, "Test", new Log());
+            Assert.IsNull(Mssql.DeleteAllTables());
         }
 
-        public string Cleanup()
+        [TestCleanup]
+        public void TestCleanup()
         {
-            var methodInfo = new StackTrace().GetFrame(1).GetMethod();
-            return Cleanup(methodInfo.Name);
-        }
-
-        public string Cleanup(string tableName)
-        {
-            var res = Mssql.DeleteTable(tableName);
-            Assert.IsNull(res);
+            Assert.IsNull(Mssql.DeleteAllTables());
             Mssql.Dispose();
-            return res;
+        }
+
+        public static string MethodName
+        {
+            get
+            {
+                var methodInfo = new StackTrace().GetFrame(1).GetMethod();
+                return methodInfo.Name;
+            }
         }
     }
 }

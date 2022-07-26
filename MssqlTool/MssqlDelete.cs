@@ -49,6 +49,24 @@ namespace Bygdrift.Tools.MssqlTool
             }
             return null;
         }
+        
+        /// <summary>
+        /// Delets all tables in current schema
+        /// </summary>
+        public string DeleteAllTables()
+        {
+            var res = ExecuteNonQuery("EXEC sp_msforeachtable \"ALTER TABLE ? NOCHECK CONSTRAINT all\"");
+            if(!string.IsNullOrEmpty(res))
+                return res;
+
+            var sql = "DECLARE @sql NVARCHAR(max) = ''\n" +
+                      "SELECT @sql += ' Drop table ' + QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME) + '; '\n" +
+                      "FROM INFORMATION_SCHEMA.TABLES\n" +
+                      $"WHERE  TABLE_TYPE = 'BASE TABLE' AND TABLE_SCHEMA = '{SchemaName}'\n" +
+                      "Exec Sp_executesql @sql\n";
+
+            return ExecuteNonQuery(sql);
+        }
 
         /// <summary>
         /// Empties the table for data if exists
