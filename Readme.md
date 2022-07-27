@@ -1,4 +1,4 @@
-# Bygdrift.Tools.Mssql
+# Bygdrift.Tools.MssqlTool
 
 Make a CSV with [Bygdrift.Tools.Csv](https://github.com/Bygdrift/Tools.CsvTool) and use this Mssql-tool to insert or merge data into a table in a Microsoft SQL database.
 

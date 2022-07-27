@@ -1,4 +1,5 @@
 ﻿using Bygdrift.Tools.CsvTool;
+using Bygdrift.Tools.LogTool.Models;
 using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
@@ -18,7 +19,7 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
         {
             this.mssql = mssql;
             this.tableName = tableName;
-            var sql = "";
+            var sqls = new List<string>();
 
             if (string.IsNullOrEmpty(tableName))
                 throw new ArgumentNullException(nameof(tableName), "Table name is null. It has to be set.");
@@ -29,20 +30,20 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
                 return;
 
             if (colTypes.All(o => !o.IsSetForSql))
-                sql = CreateTableAndColumns(colTypes);
+                sqls.Add(CreateTableAndColumns(colTypes));
             else
-                sql = UpdateColumns(colTypes);
+                sqls = UpdateColumns(colTypes);
 
-            if (!string.IsNullOrEmpty(sql))
+            if (sqls.Any())
             {
                 try
                 {
-                    mssql.Connection.ExecuteNonQuery(sql);
+                    mssql.ExecuteNonQuery(sqls);
                 }
                 catch (Exception e)
                 {
-                    mssql.Log.Add(LogTool.Models.LogType.Critical, e, "Error in db load: {Message}. Commands: {Commands}", e.Message, sql);
-                    throw new Exception($"Error in db load: {e.Message}. Commands: {sql}", e);
+                    mssql.Log.Add(LogType.Critical, e, "Error in db load: {Message}. Commands: {Commands}", e.Message, sqls);
+                    throw new Exception($"Error in db load: {e.Message}. Commands: {sqls}", e);
                 }
                 mssql.FlushRepoDb();
             }
@@ -83,24 +84,27 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             return $"CREATE TABLE [{mssql.SchemaName}].[{tableName}](\n{cols})";
         }
 
-        private string UpdateColumns(List<ColumnType> colTypes)
+        private List<string> UpdateColumns(List<ColumnType> colTypes)
         {
+            var sqls = new List<string>();
             var sql = "";
-            foreach (var colType in colTypes)
+            foreach (var colType in colTypes.OrderBy(o => o.IsPrimaryKeyCsv).ThenBy(o => o.IsPrimaryKeySql))
             {
                 if (colType.IsPrimaryKeyCsv && !colType.IsPrimaryKeySql)  //PrimaryKey added
                 {
                     if (colType.IsNullableSql)  //A normal column has been added and must be upgraded to a primary key:
                     {
                         colType.TryGetUpdatedChangedType(out string typeExpression);
-                        mssql.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {typeExpression} NOT NULL;");
+                        AddSql(sqls, ref sql);
+                        sqls.Add($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {typeExpression} NOT NULL;");
                     }
 
                     sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
                 }
                 else if (!colType.IsPrimaryKeyCsv && colType.IsPrimaryKeySql)  //PrimaryKey removed. Has to be run before ADD and thats why it is not added to sql+=...
                 {
-                    mssql.ExecuteNonQuery($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT {colType.ConstraintSql};");
+                    AddSql(sqls, ref sql);
+                    sqls.Add($"ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT {colType.ConstraintSql};");
                 }
                 else if (colType.TryGetUpdatedChangedType(out string typeExpression))  //Update column
                 {
@@ -118,7 +122,17 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
                 else if (!colType.IsSetForSql)  //Normal column added
                     sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD [{colType.Name}] {typeExpression};\n";
             }
-            return sql;
+            AddSql(sqls, ref sql);
+            return sqls;
+        }
+
+        private static void AddSql(List<string> res, ref string sql)
+        {
+            if (!string.IsNullOrEmpty(sql))
+            {
+                res.Add(sql);
+                sql = string.Empty;
+            }
         }
 
         internal string CreateConstraintName(string columnName)

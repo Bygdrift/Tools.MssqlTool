@@ -33,7 +33,7 @@ namespace MssqlToolTests
                 .AddRow(new Random().Next(1, 5000), "Some text", DateTime.Now, 22)
                 .AddRow(new Random().Next(1, 5000), "Some new text", DateTime.Now, 23);
             
-            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id", false, false));
+            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id"));
             var csvFromReader = Mssql.GetAsCsv(MethodName);
             Assert.IsTrue(csvFromReader.Headers.Count == 4);
             var csvFromReader2 = Mssql.GetAsCsv(MethodName, "Id", "Data");
@@ -46,7 +46,7 @@ namespace MssqlToolTests
             var csv = new Csv("Id, Data, Date, age, decimal")
                 .AddRow(new Random().Next(1, 5000), "Some text", DateTime.Now, 22, 36.8);
 
-            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id", false, false));
+            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id"));
             var res = Mssql.GetColumnTypes(MethodName).ToList();
             Assert.AreEqual(res[0].TypeNameSql, SqlType.@int);
             Assert.AreEqual(res[1].TypeNameSql, SqlType.varchar);
@@ -62,7 +62,7 @@ namespace MssqlToolTests
                 .AddRow(1, "Some text", DateTime.Now, 22)
                 .AddRow(2, "Some new text", DateTime.Now, 23);
 
-            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id", false, false));
+            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id"));
             var resCsv = Mssql.GetAsCsv(MethodName);
             Assert.AreEqual(resCsv.ColLimit, (1, 4));
             Assert.AreEqual(resCsv.RowLimit, (1, 2));

@@ -3,6 +3,7 @@ using Bygdrift.Tools.LogTool;
 using Bygdrift.Tools.LogTool.Models;
 using RepoDb;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Bygdrift.Tools.MssqlTool
@@ -12,6 +13,21 @@ namespace Bygdrift.Tools.MssqlTool
     /// </summary>
     public partial class Mssql
     {
+        /// <summary>
+        /// Excecutes a SQL
+        /// </summary>
+        public string ExecuteNonQuery(IEnumerable<string> sqls)
+        {
+            var res = string.Empty;
+            foreach (var item in sqls)
+            {
+                var output = ExecuteNonQuery(item);
+                if (output != null)
+                    res += output + "\n";
+            }
+            return res;
+        }
+
         /// <summary>
         /// Excecutes a SQL
         /// </summary>
@@ -46,6 +62,49 @@ namespace Bygdrift.Tools.MssqlTool
             return null;
         }
 
+        public string RemoveEmptyColumns(string tableName)
+        {
+            var sql = "DECLARE @sql NVARCHAR(MAX)\n" +
+                      "SELECT @sql = ISNULL(@sql + 'UNION ALL', '') + '\n" +
+                      "SELECT ''' + COLUMN_NAME + ''' AS col FROM ' + TABLE_SCHEMA + '.' + TABLE_NAME + ' HAVING COUNT(' + COLUMN_NAME + ') = 0 '\n" +
+                      "FROM INFORMATION_SCHEMA.COLUMNS\n" +
+                      $"WHERE TABLE_SCHEMA = '{SchemaName}' AND TABLE_NAME = '{tableName}'\n" +
+                      "EXEC(@SQL)\n";
+
+            var columns = Connection.ExecuteQuery(sql).Select(o => o.col as string);
+            return RemoveColumns(tableName, columns?.ToArray());
+        }
+
+        /// <summary>
+        /// Remove column. If it's a primarey key, then the constraint are also removed
+        /// </summary>
+        public string RemoveColumn(string tableName, string column)
+        {
+            var columns = new List<string> { column };
+            return RemoveColumns(tableName, columns.ToArray());
+        }
+
+        /// <summary>
+        /// Removes columns. If they are primarey keys, then the constraint are also removed
+        /// </summary>
+        public string RemoveColumns(string tableName, string[] columns)
+        {
+            if (columns.Any())
+            {
+                var sql = "DECLARE @PrimaryKey nvarchar(128), @Constraint varchar(128);\n" +
+                          $"SELECT @PrimaryKey = COLUMN_NAME, @Constraint = CONSTRAINT_NAME FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = '{SchemaName}' AND TABLE_NAME = '{tableName}';\n";
+
+                foreach (var col in columns)
+                {
+                    sql += $"IF('{col}' = @PrimaryKey) EXEC('ALTER TABLE [{SchemaName}].[{tableName}] DROP CONSTRAINT ' + @Constraint);\n";
+                    sql += $"ALTER TABLE [{SchemaName}].[{tableName}] DROP COLUMN [{col}];\n";
+                }
+                return ExecuteNonQuery(sql);
+            }
+            return null;
+        }
+
+
         /// <summary>
         /// Validates if there are any duplicates in the primaryKey or if there are any nulls.
         /// </summary>
@@ -58,7 +117,7 @@ namespace Bygdrift.Tools.MssqlTool
 
             var colRecords = csv.GetColRecords(primaryKey, true);
             if (colRecords == null)
-              subLog.Add(LogType.Error, $"The primaryKey '{primaryKey}' in the table '{tableName}' does not exist.");
+                subLog.Add(LogType.Error, $"The primaryKey '{primaryKey}' in the table '{tableName}' does not exist.");
             else if (csv.RowCount > 0)
             {
                 var duplicates = colRecords.GroupBy(o => o.Value).Where(g => g.Count() > 1).Select(y => y.Key).ToArray();

@@ -21,11 +21,10 @@ namespace Bygdrift.Tools.MssqlTool
         /// <param name="csv"></param>
         /// <param name="tableName"></param>
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
-        /// <param name="removeEmptyColumns">If true, all columns that only contains null data, will be removed</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
-        public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false, bool removeEmptyColumns = false)
+        public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false)
         {
-            if (!PrepareData(csv, removeEmptyColumns))
+            if (!PrepareData(csv))
                 return null;
 
             var subLog = new Log(Log.Logger);  //Generated as a sub log so result from current method can be returned
@@ -57,15 +56,14 @@ namespace Bygdrift.Tools.MssqlTool
         /// <param name="tableName"></param>
         /// <param name="primaryKey">Cannot be null - use the InsertCsv() method instead. If set, this column can't be null and must be unique values. If set and you try to insert a row that has an id that are already present, then the row will be updated</param>
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
-        /// <param name="removeEmptyColumns">If true, all columns that only contains null data, will be removed</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase.Log</returns>
-        public string[] MergeCsv(Csv csv, string tableName, string primaryKey, bool truncateTable, bool removeEmptyColumns = false)
+        public string[] MergeCsv(Csv csv, string tableName, string primaryKey, bool truncateTable = false)
         {
             if (csv == null | csv.RowCount == 0)
                 return null;
 
             var subLog = new Log(Log.Logger);  //Generated as a sub log so result from current method can be returned
-            if (!PrepareData(csv, removeEmptyColumns))
+            if (!PrepareData(csv))
                 return null;
 
             if (primaryKey == null)
@@ -111,12 +109,8 @@ namespace Bygdrift.Tools.MssqlTool
         }
 
         /// <returns>False if there is no content</returns>
-        private static bool PrepareData(Csv csv, bool removeEmptyColumns)
+        private static bool PrepareData(Csv csv)
         {
-            //csv.UniqueHeadersIgnoreCase(true);
-            if (removeEmptyColumns)
-                csv.RemoveEmptyColumns();
-
             if (csv.Headers.Count == 0)
                 return false;
 
