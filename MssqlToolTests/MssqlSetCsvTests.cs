@@ -76,6 +76,7 @@ namespace MssqlToolTests
         [TestMethod]
         public void ChangeColumnType()
         {
+            var log2 = Mssql.InsertCsv(new Csv(), MethodName);
             var log = Mssql.InsertCsv(new Csv("Id, Data").AddRow(1, 1), MethodName);
             Assert.IsNull(log);
             Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
@@ -89,24 +90,12 @@ namespace MssqlToolTests
             Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
         }
 
-        ///!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        /// <summary>
-        /// Denne virker ikke.
-        /// Byg en funktion som ser at der er forskel mellem nuværende type og ny type og den skal se om sql kan nedgraderes.
-        /// </summary>
         [TestMethod]
         public void ChangeColumnTypeFromVarCharToInt()
         {
             Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, "A"), MethodName, "Id"));
-            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, "Id"));
+            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, Data").AddRow(1, 1), MethodName, "Id", false, true));
             Assert.AreEqual(Mssql.GetColumnTypes(MethodName).Last().TypeNameSql, SqlType.@int);
-        }
-
-        [TestMethod]
-        public void GivesError()
-        {
-            var a = new Csv("Id, B").AddRow(1);
-            Assert.IsNull(Mssql.MergeCsv(new Csv("Id, B").AddRow(1), MethodName, "Id"));
         }
 
         [TestMethod]

@@ -1,6 +1,7 @@
 ﻿using Bygdrift.Tools.CsvTool;
 using Bygdrift.Tools.LogTool;
 using Bygdrift.Tools.LogTool.Models;
+using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
 using System.Collections.Generic;
@@ -60,6 +61,54 @@ namespace Bygdrift.Tools.MssqlTool
                 return e.Message;
             }
             return null;
+        }
+
+        /// <summary>
+        /// If a column in db is varchar but only continas int data and this csv says that it should be an int, then this method will try to update columntype to an int
+        /// </summary>
+        public bool TryChangeDbColumnTypes(string tableName, Csv csv)
+        {
+            var columns = GetColumnTypes(tableName).ToList();
+            if (columns.Count == 0)
+                return true;
+
+            ColumnType.AddCsv(csv, null, columns);
+            var res = true;
+            foreach (var item in columns)
+                if (!TryChangeDbColumnType(tableName, item))
+                    res = false;
+
+            return res;
+        }
+
+        /// <summary>
+        /// If a column in db is varchar but only continas int data and this csv says that it should be an int, then this method will try to update columntype to an int
+        /// </summary>
+        public bool TryChangeDbColumnTypes(string tableName, List<ColumnType> columns)
+        {
+            var res = true;
+            foreach (var item in columns.Where(o=> o.Change == Change.Downgrade))
+                if (!TryChangeDbColumnType(tableName, item))
+                    res = false;
+
+            return res;
+        }
+
+        private bool TryChangeDbColumnType(string tableName, ColumnType column)
+        {
+            if (column.Change != Change.Downgrade)
+                return true;
+
+            var sql = $"ALTER TABLE [{SchemaName}].[{tableName}] ALTER COLUMN [{column.Name}] {column.TypeExpression};";
+            try
+            {
+                Connection.ExecuteNonQuery(sql);
+            }
+            catch (Exception e)
+            {
+                return false;
+            }
+            return true;
         }
 
         public string RemoveEmptyColumns(string tableName)

@@ -53,7 +53,7 @@ namespace Bygdrift.Tools.MssqlTool
             $"WHERE C1.TABLE_SCHEMA = '{SchemaName}' AND C1.TABLE_NAME = '{tableName}'";
 
             foreach (dynamic item in Connection.ExecuteQuery(sql))
-                yield return new ColumnType(item.COLUMN_NAME).AddSql(item.DATA_TYPE, item.CHARACTER_MAXIMUM_LENGTH, item.IS_PRIMARY_KEY, item.CONSTRAINT_NAME, item.IS_NULLABLE);
+                yield return new ColumnType(item.COLUMN_NAME).AddSql(ColumnType.SqlTypeName(item.DATA_TYPE), item.CHARACTER_MAXIMUM_LENGTH, item.CONSTRAINT_NAME, item.IS_NULLABLE, item.IS_PRIMARY_KEY);
         }
 
         /// <summary>

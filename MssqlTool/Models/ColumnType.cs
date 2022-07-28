@@ -1,15 +1,21 @@
-﻿using System;
+﻿using Bygdrift.Tools.CsvTool;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Bygdrift.Tools.MssqlTool.Models
 {
     /// <summary></summary>
     public class ColumnType
     {
+        private ChangePrimaryKey? _changedPrimaryKey = null;
+        private Change? _columnChange = null;
+        private bool? _changedType = null;
+        private string _typeExpression = null;
+        //private string _typeExpressionSql = null;
+
         /// <summary></summary>
-        public ColumnType(string name)
-        {
-            Name = name;
-        }
+        public ColumnType(string name) => Name = name;
 
         /// <summary> </summary>
         public bool IsPrimaryKeyCsv { get; private set; }
@@ -35,7 +41,7 @@ namespace Bygdrift.Tools.MssqlTool.Models
         /// 
         /// </summary>
         public string ConstraintSql { get; set; }
-        
+
         /// <summary>
         /// 
         /// </summary>
@@ -57,42 +63,110 @@ namespace Bygdrift.Tools.MssqlTool.Models
         public SqlType? TypeNameSql { get; set; }
 
         /// <summary>
+        /// If there are changes between csv and SQL, this typeExpresion will decribe the change
+        /// </summary>
+        public string TypeExpression
+        {
+            get { return IsSetForCsv ? _typeExpression ??= TypeNameCsv + GetTypeExtension((SqlType)TypeNameCsv, MaxLengthCsv) : null; }
+        }
+
+        /// <summary>
+        /// If there are any changes between sql and csv
+        /// </summary>
+        public bool ChangedType
+        {
+            get
+            {
+                if (_changedType == null)
+                {
+                    var typeExpressionSql = IsSetForSql ? TypeNameSql + GetTypeExtension((SqlType)TypeNameSql, MaxLengthSql) : null;
+                    _changedType = TypeExpression != null ? (!TypeExpression.Equals(typeExpressionSql)) : true;
+                }
+
+                return (bool)_changedType;
+            }
+        }
+
+        /// <summary>
+        /// If there are any changes between sql and csv
+        /// </summary>
+        public ChangePrimaryKey ChangedPrimaryKey
+        {
+            get { 
+                if(_changedPrimaryKey == null)
+                {
+                    if (IsPrimaryKeyCsv && !IsPrimaryKeySql)
+                        _changedPrimaryKey = ChangePrimaryKey.Add;
+                    else if (!IsPrimaryKeyCsv && IsPrimaryKeySql)
+                        _changedPrimaryKey = ChangePrimaryKey.Remove;
+                    else
+                        _changedPrimaryKey = ChangePrimaryKey.None;
+                }
+                return (ChangePrimaryKey)_changedPrimaryKey;
+            }
+        }
+
+        /// <summary>
         /// Add a ColumnType from the database
         /// </summary>
-        /// <param name="sqlTypeName"></param>
-        /// <param name="sqlMaxLength"></param>
-        /// <param name="sqlIsPrimaryKey"></param>
-        /// <param name="sqlConstraint"></param>
-        /// <param name="sqlIsNullable"></param>
-        /// <returns></returns>
-        public ColumnType AddSql(string sqlTypeName, int? sqlMaxLength, bool sqlIsPrimaryKey, string sqlConstraint, bool sqlIsNullable)
+        public ColumnType AddSql(SqlType sqlTypeName, int? sqlMaxLength, string sqlConstraint, bool sqlIsNullable, bool sqlIsPrimaryKey = false)
         {
             IsSetForSql = true;
-            TypeNameSql = GetSqlTypeName(sqlTypeName);  //Must be set before MaxLength
+            TypeNameSql = sqlTypeName; // GetSqlTypeName(sqlTypeName);  //Must be set before MaxLength
             MaxLengthSql = sqlMaxLength;
             IsPrimaryKeySql = sqlIsPrimaryKey;
             ConstraintSql = sqlConstraint;
             IsNullableSql = sqlIsNullable;
+            _changedPrimaryKey = null;
+            _columnChange = null;
+            _changedType = null;
+            _typeExpression = null;
             return this;
         }
 
         /// <summary>
         /// Add the columntype from the CSV
         /// </summary>
-        /// <param name="csvType"></param>
-        /// <param name="csvMaxLength"></param>
-        /// <param name="csvIsPrimaryKey"></param>
-        /// <returns></returns>
-        public ColumnType AddCsv(Type csvType, int csvMaxLength, bool csvIsPrimaryKey)
+        public ColumnType AddCsv(Type csvType, int csvMaxLength, bool csvIsPrimaryKey = false)
         {
             IsSetForCsv = true;
             TypeNameCsv = GetCsvToSqlTypeName(csvType);
             MaxLengthCsv = csvMaxLength;
             IsPrimaryKeyCsv = csvIsPrimaryKey;
+            _changedPrimaryKey = null;
+            _columnChange = null;
+            _changedType = null;
+            _typeExpression = null;
             return this;
         }
 
-        private SqlType GetSqlTypeName(string type)
+        /// <summary>
+        /// Adds a whole csv to a list of columnTypes
+        /// </summary>
+        public static void AddCsv(Csv csv, string csvPrimaryKey, List<ColumnType> columnTypes)
+        {
+            foreach (var colType in columnTypes)
+                if (csv.TryGetColId(colType.Name, out int csvColId, false))  //Not caseSensitive because SQL are not
+                {
+                    var csvIsPrimaryKey = csvPrimaryKey != null && csvPrimaryKey.Equals(colType.Name);
+                    colType.AddCsv(csv.ColTypes[csvColId], csv.ColMaxLengths[csvColId], csvIsPrimaryKey);
+                }
+
+            var notInSqlHeaders = csv.Headers.Values.Except(columnTypes.Select(o => o.Name));
+            foreach (var name in notInSqlHeaders)
+            {
+                if (csv.TryGetColId(name, out int csvColId, false) && csv.ColTypes.Any() && csv.ColMaxLengths.Any())  //Not caseSensitive because SQL are not
+                {
+                    var isPrimaryKey = csvPrimaryKey != null && csvPrimaryKey.Equals(name);
+                    columnTypes.Add(new ColumnType(name).AddCsv(csv.ColTypes[csvColId], csv.ColMaxLengths[csvColId], isPrimaryKey));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Converts a string to a SQLType
+        /// </summary>
+        public static SqlType SqlTypeName(string type)
         {
             if (Enum.TryParse(typeof(SqlType), type.ToLower(), out object res))
                 return (SqlType)res;
@@ -101,96 +175,125 @@ namespace Bygdrift.Tools.MssqlTool.Models
         }
 
         /// <summary>
-        /// Wether the TypeExpression should be updated. If so, typeExpression will retrun the result
+        /// The change between sql and csv
         /// </summary>
-        /// <param name="typeExpression"></param>
-        public bool TryGetUpdatedChangedType(out string typeExpression)
-        {
-            var TypeExpressionCsv = IsSetForCsv ? TypeNameCsv + GetTypeExtension((SqlType)TypeNameCsv, MaxLengthCsv) : null;
-            var TypeExpressionSql = IsSetForSql ? TypeNameSql + GetTypeExtension((SqlType)TypeNameSql, MaxLengthSql) : null;
-            typeExpression = TypeExpressionSql ?? TypeExpressionCsv;
-            var isChanged = false;
+        public Change Change { get { return _columnChange ??= GetChange(); } }
 
-            if (IsSetForCsv != IsSetForSql || TypeExpressionCsv.Equals(TypeExpressionSql))  //If not update or no changes
-                return false;
+        private Change GetChange()
+        {
+            if (!ChangedType)
+                return Change.None;
+
+            if (TypeNameSql == null)
+                return Change.Add;
+
+            if (TypeNameCsv == null)
+                return Change.None;
 
             if (TypeNameSql == SqlType.bit)
             {
-                if (TryGetTypeExpression(SqlType.bit, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.binary, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.smallint, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@int, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.bigint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.real, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@float, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@decimal, true, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.bit) return Change.Equal;
+                if (TypeNameCsv == SqlType.binary) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
             }
             if (TypeNameSql == SqlType.smallint)
             {
-                if (TryGetTypeExpression(SqlType.bit, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.binary, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.smallint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@int, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.bigint, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.real, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@float, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@decimal, true, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Equal;
+                if (TypeNameCsv == SqlType.@int) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
             }
             if (TypeNameSql == SqlType.@int)
             {
-                if (TryGetTypeExpression(SqlType.bit, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.binary, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.smallint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@int, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.bigint, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.real, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@float, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@decimal, true, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Equal;
+                if (TypeNameCsv == SqlType.bigint) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
             }
             if (TypeNameSql == SqlType.bigint)
             {
-                if (TryGetTypeExpression(SqlType.bit, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.binary, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.smallint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@int, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.bigint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.real, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@float, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@decimal, true, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Equal;
+                if (TypeNameCsv == SqlType.real) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
             }
             if (TypeNameSql == SqlType.real)
             {
-                if (TryGetTypeExpression(SqlType.bit, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.binary, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.smallint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@int, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.bigint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.real, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@float, true, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@decimal, true, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Equal;
+                if (TypeNameCsv == SqlType.@float) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
             }
             if (TypeNameSql == SqlType.@float)
             {
-                if (TryGetTypeExpression(SqlType.bit, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.binary, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.smallint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@int, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.bigint, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.real, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@float, false, ref typeExpression, ref isChanged)) return isChanged;
-                if (TryGetTypeExpression(SqlType.@decimal, true, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Equal;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Upgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
+            }
+            if (TypeNameSql == SqlType.@decimal)
+            {
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Equal;
+                if (TypeNameCsv == SqlType.varchar) return Change.Upgrade;
             }
             if (TypeNameSql == SqlType.datetime)
             {
-                if (TryGetTypeExpression(SqlType.datetime, false, ref typeExpression, ref isChanged)) return isChanged;
+                if (TypeNameCsv == SqlType.datetime) return Change.Equal;
             }
-
-            var maxLength = MaxLengthCsv > MaxLengthSql || MaxLengthSql == null ? MaxLengthCsv : MaxLengthSql;
-            typeExpression = "varchar" + GetTypeExtension(SqlType.varchar, maxLength);
-            return true;
+            if (TypeNameSql == SqlType.varchar)
+            {
+                if (TypeNameCsv == SqlType.bit) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.binary) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.smallint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@int) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.bigint) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.real) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@float) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.@decimal) return Change.Downgrade;
+                if (TypeNameCsv == SqlType.varchar) return Change.Equal;
+            }
+            throw new NotImplementedException();
         }
 
-        internal string GetTypeExtension(SqlType type, int? maxLength)
+        private static string GetTypeExtension(SqlType type, int? maxLength)
         {
             return type switch
             {
@@ -200,24 +303,7 @@ namespace Bygdrift.Tools.MssqlTool.Models
             };
         }
 
-        private bool TryGetTypeExpression(SqlType csvTypeName, bool doChange, ref string typeExpression, ref bool isChanged)
-        {
-            if (TypeNameCsv != csvTypeName)
-                return false;
-
-            if (TypeNameCsv == csvTypeName && !doChange)
-            {
-                isChanged = false;
-                return true;
-            }
-
-            isChanged = true;
-            var maxLength = MaxLengthCsv > MaxLengthSql || MaxLengthSql == null ? MaxLengthCsv : MaxLengthSql;
-            typeExpression = TypeNameCsv + GetTypeExtension(csvTypeName, maxLength);
-            return true;
-        }
-
-        private SqlType GetCsvToSqlTypeName(Type type)
+        private static SqlType GetCsvToSqlTypeName(Type type)
         {
             return Type.GetTypeCode(type) switch  //Remember to keep theses returns lowercase
             {

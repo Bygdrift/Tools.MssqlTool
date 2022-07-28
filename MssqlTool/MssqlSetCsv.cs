@@ -2,6 +2,7 @@
 using Bygdrift.Tools.LogTool;
 using Bygdrift.Tools.LogTool.Models;
 using Bygdrift.Tools.MssqlTool.Helpers;
+using Bygdrift.Tools.MssqlTool.Models;
 using RepoDb;
 using System;
 using System.Linq;
@@ -21,8 +22,9 @@ namespace Bygdrift.Tools.MssqlTool
         /// <param name="csv"></param>
         /// <param name="tableName"></param>
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
+        /// <param name="tryOptimizeTypes">If a column in db consists of int values, and the concurrent column from csv, says it can be optimized, then it will be tried</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
-        public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false)
+        public string[] InsertCsv(Csv csv, string tableName, bool truncateTable = false, bool tryOptimizeTypes = false)
         {
             if (!PrepareData(csv))
                 return null;
@@ -32,7 +34,7 @@ namespace Bygdrift.Tools.MssqlTool
             if (truncateTable)
                 DeleteTable(tableName);
 
-            new PrepareTableForCsv(this, csv, tableName, null);
+            var prep = new PrepareTableForCsv(this, csv, tableName, null);
             var data = csv.ToExpandoList();
 
             try
@@ -43,6 +45,9 @@ namespace Bygdrift.Tools.MssqlTool
             {
                 subLog.Add(LogType.Error, e.Message);
             }
+
+            if (tryOptimizeTypes)
+                TryChangeDbColumnTypes(tableName, prep.ColumnTypes);
 
             return subLog.Any() ? subLog.GetLogs().ToArray() : null;
         }
@@ -56,8 +61,9 @@ namespace Bygdrift.Tools.MssqlTool
         /// <param name="tableName"></param>
         /// <param name="primaryKey">Cannot be null - use the InsertCsv() method instead. If set, this column can't be null and must be unique values. If set and you try to insert a row that has an id that are already present, then the row will be updated</param>
         /// <param name="truncateTable">If true, the table gets truncated and filed with new data</param>
+        /// <param name="tryOptimizeTypes">If a column in db consists of int values, and the concurrent column from csv, says it can be optimized, then it will be tried</param>
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase.Log</returns>
-        public string[] MergeCsv(Csv csv, string tableName, string primaryKey, bool truncateTable = false)
+        public string[] MergeCsv(Csv csv, string tableName, string primaryKey, bool truncateTable = false, bool tryOptimizeTypes = false)
         {
             if (csv == null | csv.RowCount == 0)
                 return null;
@@ -79,7 +85,7 @@ namespace Bygdrift.Tools.MssqlTool
             if (truncateTable)
                 DeleteTable(tableName);
 
-            new PrepareTableForCsv(this, csv, tableName, primaryKey);
+            var prep = new PrepareTableForCsv(this, csv, tableName, primaryKey);
             var data = csv.ToExpandoList();
 
             if (truncateTable)
@@ -104,6 +110,9 @@ namespace Bygdrift.Tools.MssqlTool
                     subLog.Add(LogType.Error, e.Message);
                 }
             }
+
+            if (tryOptimizeTypes)
+                TryChangeDbColumnTypes(tableName, prep.ColumnTypes);
 
             return subLog.Any() ? subLog.GetLogs().ToArray() : null;
         }
