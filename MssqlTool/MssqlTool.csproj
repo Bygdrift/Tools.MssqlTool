@@ -13,8 +13,9 @@
 		<PackageTags>SQL</PackageTags>
 		<RepositoryType>git</RepositoryType>
 		<NeutralLanguage>en</NeutralLanguage>
-		<PackageId>Bygdrift.MssqlTools</PackageId>
-		<Product>Bygdrift.MssqlTools</Product>
+		<AssemblyName>Bygdrift.Tools.MssqlTool</AssemblyName>
+		<PackageId>Bygdrift.Tools.MssqlTool</PackageId>
+		<Product>Bygdrift.Tools.MssqlTool</Product>
 		<PackageLicenseExpression>MIT</PackageLicenseExpression>
 		<PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
 		<PackageReleaseNotes>
@@ -40,5 +41,16 @@
 		<ProjectReference Include="$(SolutionDir)Submodules\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
 		<ProjectReference Include="$(SolutionDir)Submodules\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
 	</ItemGroup>
-
+	
+	<ItemGroup>
+		<Content Include="$(SolutionDir)Submodules\Bygdrift.Tools.CsvTool\CsvTool\bin\Debug\net6.0\Bygdrift.Tools.CsvTool.dll">
+			<Pack>true</Pack>
+			<PackagePath>lib\$(TargetFramework)</PackagePath>
+		</Content>
+		<Content Include="$(SolutionDir)Submodules\Bygdrift.Tools.LogTool\LogTool\bin\Debug\net6.0\Bygdrift.Tools.LogTool.dll">
+			<Pack>true</Pack>
+			<PackagePath>lib\$(TargetFramework)</PackagePath>
+		</Content>
+	</ItemGroup>
+	
 </Project>

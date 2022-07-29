@@ -104,13 +104,16 @@ namespace Bygdrift.Tools.MssqlTool
             {
                 Connection.ExecuteNonQuery(sql);
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 return false;
             }
             return true;
         }
 
+        /// <summary>
+        /// If a column does'nt have any content, it will be removed
+        /// </summary>
         public string RemoveEmptyColumns(string tableName)
         {
             var sql = "DECLARE @sql NVARCHAR(MAX)\n" +
