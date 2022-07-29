@@ -19,13 +19,4 @@
         <ProjectReference Include="..\MssqlTool\MssqlTool.csproj" />
     </ItemGroup>
 
-	<!--<ItemGroup>
-		<Reference Include="CsvTool">
-			<HintPath>$(SolutionDir)Submodules\Bygdrift.Tools.CsvTool\CsvTool\bin\Debug\net6.0\Bygdrift.Tools.CsvTool.dll</HintPath>
-		</Reference>
-		<Reference Include="LogTool">
-			<HintPath>$(SolutionDir)Submodules\Bygdrift.Tools.LogTool\LogTool\bin\Debug\net6.0\Bygdrift.Tools.LogTool.dll</HintPath>
-		</Reference>
-	</ItemGroup>-->
-
 </Project>

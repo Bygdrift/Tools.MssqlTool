@@ -1,6 +1,0 @@
-[submodule "Submodules/Bygdrift.Tools.CsvTool"]
-	path = Submodules/Bygdrift.Tools.CsvTool
-	url = https://github.com/Bygdrift/Tools.CsvTool
-[submodule "Submodules/Bygdrift.Tools.LogTool"]
-	path = Submodules/Bygdrift.Tools.LogTool
-	url = https://github.com/Bygdrift/Tools.LogTool
