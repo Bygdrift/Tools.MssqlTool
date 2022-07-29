@@ -1,5 +1,5 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-	<!--Notice to Bygdrift developer: Create nuget package: dotnet pack-->
+
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
 		<Version>0.9.2</Version>
@@ -36,16 +36,9 @@
 		<PackageReference Include="RepoDb.SqlServer.BulkOperations" Version="1.1.6" />
 	</ItemGroup>
 
-	<!--When MssqlTool is used as main package-->
-	<ItemGroup Condition="!Exists('..\..\..\Submodules')">
-		<ProjectReference Include="..\Submodules\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
-		<ProjectReference Include="..\Submodules\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
-	</ItemGroup>
-
-	<!--When MssqlTool is accesed as SubModule from a sub folder-->
-	<ItemGroup Condition="Exists('..\..\..\Submodules')">
-		<ProjectReference Include="..\..\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
-		<ProjectReference Include="..\..\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
+	<ItemGroup>
+		<ProjectReference Include="$(SolutionDir)Submodules\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
+		<ProjectReference Include="$(SolutionDir)Submodules\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
 	</ItemGroup>
 
 </Project>
