@@ -36,9 +36,16 @@
 		<PackageReference Include="RepoDb.SqlServer.BulkOperations" Version="1.1.6" />
 	</ItemGroup>
 
-	<ItemGroup>
-	  <ProjectReference Include="..\Submodules\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
-	  <ProjectReference Include="..\Submodules\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
+	<!--When MssqlTool is used as main package-->
+	<ItemGroup Condition="!Exists('..\..\..\Submodules')">
+		<ProjectReference Include="..\Submodules\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
+		<ProjectReference Include="..\Submodules\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
 	</ItemGroup>
-	
+
+	<!--When MssqlTool is accesed as SubModule from a sub folder-->
+	<ItemGroup Condition="Exists('..\..\..\Submodules')">
+		<ProjectReference Include="..\..\Bygdrift.Tools.CsvTool\CsvTool\CsvTool.csproj" />
+		<ProjectReference Include="..\..\Bygdrift.Tools.LogTool\LogTool\LogTool.csproj" />
+	</ItemGroup>
+
 </Project>
