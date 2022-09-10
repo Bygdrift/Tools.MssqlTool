@@ -106,6 +106,16 @@ namespace MssqlToolTests
         }
 
         [TestMethod]
+        public void AddDouble()
+        {
+            //Passing double can go from 21 to 24 when converted to string - ex: 0.0000001129498786607691 becomes 1,12949878660769E-07
+            //So for now, doubles are casted to decimals because they are straight forward to read in db
+            //Assert.IsNull(Mssql.InsertCsv(new Csv("Data").AddRow(0.0000001129498786607691), MethodName));
+            Assert.IsNull(Mssql.InsertCsv(new Csv("Data").AddRow(0.00000000000000000000000000000000000000000001), MethodName));
+            Assert.AreEqual(Mssql.GetColumnTypes(MethodName).First().TypeNameSql, SqlType.@float);
+        }
+
+        [TestMethod]
         public void PrimaryKey_Removed()
         {
             Assert.IsNull(Mssql.MergeCsv(new Csv("Id").AddRow(1), MethodName, "Id"));
@@ -188,6 +198,26 @@ namespace MssqlToolTests
         {
             var csv = new Csv("Id, Data, Date, Age").AddRow(1, "Some text", DateTime.Now, 22).AddRecord(2, 1, 2).AddRecord(2, 4, null);
             var csvTwo = new Csv("Id, Data, Date, Age, Name").AddRow(1, "Some more text", DateTime.Now, 22, "Knud");
+            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id"));
+            Assert.IsNull(Mssql.MergeCsv(csvTwo, MethodName, "Id"));
+            Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
+        }
+
+        [TestMethod]
+        public void MergeWithShorterString()
+        {
+            var csv = new Csv("Id, Data").AddRow(1, "A long text");
+            var csvTwo = new Csv("Id, Data").AddRow(1, "text");
+            Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id"));
+            Assert.IsNull(Mssql.MergeCsv(csvTwo, MethodName, "Id"));
+            Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());
+        }
+
+        [TestMethod]
+        public void MergePrimaryKeyWithShorterString()
+        {
+            var csv = new Csv("Id").AddRow("ss");
+            var csvTwo = new Csv("Id").AddRow("s");
             Assert.IsNull(Mssql.MergeCsv(csv, MethodName, "Id"));
             Assert.IsNull(Mssql.MergeCsv(csvTwo, MethodName, "Id"));
             Assert.IsFalse(Mssql.Log.GetErrorsAndCriticals().Any());

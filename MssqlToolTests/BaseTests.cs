@@ -18,7 +18,8 @@ namespace MssqlToolTests
             var dbPath = Path.Combine(BasePath, "Files\\DB\\MssqlTools.mdf");
             var conn = $"Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename={dbPath};Integrated Security=True";
             Mssql = new Mssql(conn, "Test", new Log());
-            Assert.IsNull(Mssql.DeleteAllTables());
+            var error = Mssql.DeleteAllTables();
+            Assert.IsNull(error);
         }
 
         [TestCleanup]

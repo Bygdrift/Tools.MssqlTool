@@ -163,7 +163,7 @@ namespace Bygdrift.Tools.MssqlTool
         /// <returns>Null if no errors or else an array of errors. Errors are also send to AppBase</returns>
         public Log ValidatePrimaryKey(Csv csv, string tableName, string primaryKey)
         {
-            var subLog = new Log(Log.Logger);
+            var subLog = new Log(Log);
             if (!csv.Headers.Any())
                 return subLog.Add(LogType.Error, "The csv is empty.");
 

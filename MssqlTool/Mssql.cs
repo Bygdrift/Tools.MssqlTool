@@ -11,6 +11,7 @@ namespace Bygdrift.Tools.MssqlTool
     public partial class Mssql : IDisposable
     {
         private SqlConnection _connection;
+        private string _connectionString;
 
         /// <summary>
         /// 
@@ -28,7 +29,15 @@ namespace Bygdrift.Tools.MssqlTool
         /// <summary>
         /// MS Sql connection
         /// </summary>
-        public string ConnectionString { get; }
+        public string ConnectionString
+        {
+            get { return _connectionString; }
+            set
+            {
+                _connectionString = value;
+                Dispose();
+            }
+        }
 
         /// <summary>
         /// The schema name
@@ -61,7 +70,7 @@ namespace Bygdrift.Tools.MssqlTool
                     {
                         ConnectTimeout = 30,
                         CommandTimeout = 3600
-                    };  
+                    };
 
                     _connection = new SqlConnection(builder.ToString());
                 }

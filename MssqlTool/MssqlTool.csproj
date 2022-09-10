@@ -2,7 +2,7 @@
 
 	<PropertyGroup>
 		<TargetFramework>net6.0</TargetFramework>
-		<Version>1.0.0-alpha.1</Version>
+		<Version>1.0.1</Version>
 		<Authors>kenboc</Authors>
 		<Company>Bygdrift</Company>
 		<Description>Add, update or overwrite random csv-files directly into MS SQL database as a table.</Description>
@@ -29,8 +29,10 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Bygdrift.Tools.CsvTool" Version="1.0.4" />
-		<PackageReference Include="Bygdrift.Tools.LogTool" Version="0.9.1" />
+		<!--<PackageReference Include="Bygdrift.Tools.CsvTool" Version="1.0.4" />-->
+		<!--<PackageReference Include="Bygdrift.Tools.LogTool" Version="0.9.1" />-->
+		<PackageReference Include="Bygdrift.Tools.CsvTool" Version="1.1.0" />
+		<PackageReference Include="Bygdrift.Tools.LogTool" Version="1.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
 		<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
@@ -38,5 +40,20 @@
 		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
 		<PackageReference Include="RepoDb.SqlServer.BulkOperations" Version="1.1.6" />
 	</ItemGroup>
+
+	<!--<ItemGroup>
+		--><!--FOR TESTING CSVTOOL--><!--
+		<Reference Include="Bygdrift.Tools.CsvTool">
+		<HintPath>..\..\CsvTool\CsvTool\bin\Debug\net6.0\Bygdrift.Tools.CsvTool.dll</HintPath>
+		</Reference>
+		<PackageReference Include="ClosedXML" Version="0.95.4" />
+		<PackageReference Include="ExcelDataReader" Version="3.6.0" />
+		<PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+		--><!--LogtTool--><!--
+		<Reference Include="Bygdrift.Tools.LogTool">
+			<HintPath>..\..\LogTool\LogTool\bin\Debug\net6.0\Bygdrift.Tools.LogTool.dll</HintPath>
+		</Reference>
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+	</ItemGroup>-->
 	
 </Project>

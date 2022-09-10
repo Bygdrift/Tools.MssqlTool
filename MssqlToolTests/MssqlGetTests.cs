@@ -52,7 +52,7 @@ namespace MssqlToolTests
             Assert.AreEqual(res[1].TypeNameSql, SqlType.varchar);
             Assert.AreEqual(res[2].TypeNameSql, SqlType.datetime);
             Assert.AreEqual(res[3].TypeNameSql, SqlType.@int);
-            Assert.AreEqual(res[4].TypeNameSql, SqlType.@decimal);
+            Assert.AreEqual(res[4].TypeNameSql, SqlType.@float);
         }
 
         [TestMethod]

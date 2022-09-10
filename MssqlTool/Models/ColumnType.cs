@@ -293,7 +293,7 @@ namespace Bygdrift.Tools.MssqlTool.Models
             throw new NotImplementedException();
         }
 
-        private static string GetTypeExtension(SqlType type, int? maxLength)
+        internal static string GetTypeExtension(SqlType type, int? maxLength)
         {
             return type switch
             {

@@ -29,7 +29,7 @@ namespace Bygdrift.Tools.MssqlTool
             if (!PrepareData(csv))
                 return null;
 
-            var subLog = new Log(Log.Logger);  //Generated as a sub log so result from current method can be returned
+            var subLog = new Log(Log);  //Generated as a sub log so result from current method can be returned
 
             if (truncateTable)
                 DeleteTable(tableName);
@@ -68,7 +68,7 @@ namespace Bygdrift.Tools.MssqlTool
             if (csv == null | csv.RowCount == 0)
                 return null;
 
-            var subLog = new Log(Log.Logger);  //Generated as a sub log so result from current method can be returned
+            var subLog = new Log(Log);  //Generated as a sub log so result from current method can be returned
             if (!PrepareData(csv))
                 return null;
 

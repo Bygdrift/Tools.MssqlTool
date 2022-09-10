@@ -43,6 +43,24 @@ namespace Bygdrift.Tools.MssqlTool
             return new Csv().FromExpandoObjects(data);
         }
 
+        /// <summary>
+        /// Get all data as csv
+        /// </summary>
+        /// <param name="sql">The sql to excecute</param>
+        /// <returns>Data as csv</returns>
+        public Csv GetAsCsvQuery(string sql)
+        {
+            try
+            {
+                IEnumerable<dynamic> data = Connection.ExecuteQuery(sql);
+                return new Csv().FromExpandoObjects(data);
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
         /// <summary></summary>
         public IEnumerable<ColumnType> GetColumnTypes(string tableName)
         {

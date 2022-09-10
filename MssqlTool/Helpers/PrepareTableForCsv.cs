@@ -88,12 +88,22 @@ namespace Bygdrift.Tools.MssqlTool.Helpers
             {
                 sql += "DECLARE @constraint varchar(128);\n" +
                       $"SELECT @constraint = CONSTRAINT_NAME FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS WHERE TABLE_SCHEMA = '{mssql.SchemaName}' AND TABLE_NAME = '{tableName}';\n" +
-                      $"if (@constraint) IS NOT NULL EXEC('ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT ' + @constraint);\n" +
-                      $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {colType.TypeExpression} NOT NULL;\n" +
-                      $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
+                      $"if (@constraint) IS NOT NULL EXEC('ALTER TABLE [{mssql.SchemaName}].[{tableName}] DROP CONSTRAINT ' + @constraint);\n";
+
+                if (colType.Change == Change.Equal && colType.MaxLengthCsv > colType.MaxLengthSql)
+                    sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {colType.TypeExpression} NOT NULL;\n";
+                else if (colType.Change != Change.Equal)
+                    sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {colType.TypeNameCsv + ColumnType.GetTypeExtension((SqlType)colType.TypeNameCsv, colType.MaxLengthSql > colType.MaxLengthCsv ? colType.MaxLengthSql : colType.MaxLengthCsv)} NOT NULL;\n";
+
+                sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ADD CONSTRAINT [{CreateConstraintName(colType.Name)}] PRIMARY KEY ([{colType.Name}]);\n";
             }
             else  //Normal colum updated
-                sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {colType.TypeExpression};\n";
+            {
+                if (colType.Change == Change.Equal && colType.MaxLengthCsv > colType.MaxLengthSql)
+                    sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {colType.TypeExpression};\n";
+                else if (colType.Change != Change.Equal)
+                    sql += $"ALTER TABLE [{mssql.SchemaName}].[{tableName}] ALTER COLUMN [{colType.Name}] {colType.TypeNameCsv + ColumnType.GetTypeExtension((SqlType)colType.TypeNameCsv, colType.MaxLengthSql > colType.MaxLengthCsv ? colType.MaxLengthSql : colType.MaxLengthCsv)};\n";
+            }
         }
 
         private static void AddSql(List<string> sqls, ref string sql)
